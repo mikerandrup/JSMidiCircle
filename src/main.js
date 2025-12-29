@@ -108,6 +108,7 @@ function initMidi() {
         const noteArray = new Array(12).fill(0);
         const chordRoot = document.getElementById('chordRoot');
         const chordQuality = document.getElementById('chordQuality');
+        const chordInversion = document.getElementById('chordInversion');
         let chordTimeout = null;
 
         // Convert note name to chromatic index (0-11)
@@ -151,6 +152,7 @@ function initMidi() {
             // Clear chord display by default
             if (chordRoot) chordRoot.textContent = '';
             if (chordQuality) chordQuality.textContent = '';
+            if (chordInversion) chordInversion.textContent = '';
 
             if (activeNotes.length >= 3) {
                 const detected = Chord.detect(activeNotes);
@@ -168,9 +170,29 @@ function initMidi() {
                         // Display formatted chord name
                         if (chordRoot && chordQuality) {
                             chordRoot.textContent = formatRoot(chordInfo.tonic);
-                            // Use chordInfo.type directly - tonal returns readable names
                             const quality = chordInfo.type || '';
                             chordQuality.textContent = quality;
+                        }
+
+                        // Check for inversion (slash chord notation)
+                        if (chordInversion && chordName.includes('/')) {
+                            const bassNote = chordName.split('/')[1];
+                            const bassIndex = noteToIndex(bassNote);
+                            const rootIdx = noteToIndex(chordInfo.tonic);
+                            const interval = (bassIndex - rootIdx + 12) % 12;
+
+                            // Determine inversion based on interval from root
+                            let inversionText = '';
+                            if (interval === 3 || interval === 4) {
+                                inversionText = '1st inversion (3rd in bass)';
+                            } else if (interval === 7) {
+                                inversionText = '2nd inversion (5th in bass)';
+                            } else if (interval === 10 || interval === 11) {
+                                inversionText = '3rd inversion (7th in bass)';
+                            } else {
+                                inversionText = formatRoot(bassNote) + ' in bass';
+                            }
+                            chordInversion.textContent = inversionText;
                         }
                     }
                 }
