@@ -1,0 +1,21 @@
+{
+  "name": "js-midi-circle",
+  "version": "1.0.0",
+  "description": "WebMIDI Circle of Fifths visualizer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "midi",
+    "webmidi",
+    "circle-of-fifths",
+    "music",
+    "visualizer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
