@@ -4,12 +4,13 @@ Project instructions for Claude Code when working with this codebase.
 
 ## Project Overview
 
-JSMidiCircle is a WebMIDI-based Circle of Fifths visualizer. It displays 12 musical notes in a circle and provides real-time visual feedback when notes are played on a connected MIDI device.
+JSMidiCircle is a WebMIDI-based Circle of Fifths visualizer with chord detection. It displays 12 musical notes in a circle, detects chords in real-time, and provides visual feedback to help learn music theory.
 
 ## Technology Stack
 
 - **Frontend**: Vanilla HTML/CSS/JavaScript (ES6+)
 - **MIDI**: WebMIDI API via webmidi.js library (v2.5.3)
+- **Chord Detection**: tonal.js library
 - **Build**: esbuild for bundling
 - **Server**: Node.js with Express for local development
 
@@ -18,7 +19,7 @@ JSMidiCircle is a WebMIDI-based Circle of Fifths visualizer. It displays 12 musi
 ```
 /
 ├── src/
-│   └── main.js       # Source - MIDI handling and circle arrangement logic
+│   └── main.js       # Source - MIDI handling, chord detection, circle arrangement
 ├── dist/
 │   └── bundle.js     # Built output (generated)
 ├── index.html        # Main HTML with SVG circle layout and styles
@@ -29,20 +30,33 @@ JSMidiCircle is a WebMIDI-based Circle of Fifths visualizer. It displays 12 musi
 ## Key Concepts
 
 ### Circle Arrangement
-- Notes are positioned around a circle using trigonometric calculations
+- Notes positioned around a circle using trigonometric calculations
 - `chromToCOF()` converts between chromatic index and Circle of Fifths position
-- Layout toggles between Circle of Fifths (musical) and chromatic (sequential) arrangements
+- Layout toggles between Circle of Fifths (musical) and chromatic (sequential)
+
+### Chord Detection
+- Uses `Chord.detect()` from tonal.js to identify chords from active notes
+- Uses `Chord.get()` to retrieve chord details (tonic, type, notes)
+- Detects inversions via slash notation (e.g., "C/E" = C with E in bass)
+- Displays root note, quality, and inversion info in center circle
 
 ### MIDI Handling
 - Uses webmidi.js library (bundled via npm)
 - Listens for `noteon`, `noteoff`, and `controlchange` events
 - Tracks note state with `noteArray` (supports multiple simultaneous octaves)
 - Sustain pedal (CC64) support with special visual states
+- 40ms debounce on chord detection to handle rolled chords
 
 ### Visual States
-- `data-n` attribute tracks note intensity (-1 = sustained, 0 = off, 1+ = number of keys pressed)
-- CSS transitions provide smooth visual feedback
-- Green gradient indicates active notes
+- `.on` class (green) - chord root when a chord is detected
+- `.partial` class (grey) - pressed notes that aren't the chord root
+- `.off` class (white) - notes not being played
+- `data-n` attribute tracks note intensity for stroke width styling
+
+### Chord Display (center circle)
+- `#chordRoot` - large text showing root note (e.g., "C")
+- `#chordQuality` - smaller text showing chord type (e.g., "major seventh")
+- `#chordInversion` - small grey text for inversions (e.g., "1st inversion (3rd in bass)")
 
 ## Development Commands
 
