@@ -154,6 +154,13 @@ function initMidi() {
             if (chordQuality) chordQuality.textContent = '';
             if (chordInversion) chordInversion.textContent = '';
 
+            // Show hint when 1-2 notes pressed
+            if (activeNotes.length > 0 && activeNotes.length < 3) {
+                if (chordQuality) {
+                    chordQuality.textContent = '(add more notes)';
+                }
+            }
+
             if (activeNotes.length >= 3) {
                 const detected = Chord.detect(activeNotes);
                 if (detected.length > 0) {

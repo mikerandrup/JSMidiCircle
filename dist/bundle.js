@@ -2152,6 +2152,11 @@
         if (chordRoot) chordRoot.textContent = "";
         if (chordQuality) chordQuality.textContent = "";
         if (chordInversion) chordInversion.textContent = "";
+        if (activeNotes.length > 0 && activeNotes.length < 3) {
+          if (chordQuality) {
+            chordQuality.textContent = "(add more notes)";
+          }
+        }
         if (activeNotes.length >= 3) {
           const detected = dist_exports.detect(activeNotes);
           if (detected.length > 0) {
