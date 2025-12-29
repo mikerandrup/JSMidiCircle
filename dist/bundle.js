@@ -566,12 +566,16 @@
       svgGroups[i].setAttribute("transform", `translate(${xy[0].toFixed(3)},${xy[1].toFixed(3)})`);
     }
   }
-  arrangeCircles(true);
-  var layout = true;
-  window.switchLayout = function() {
-    layout = !layout;
-    arrangeCircles(layout);
-  };
+  var useCircleOfFifths = true;
+  arrangeCircles(useCircleOfFifths);
+  var layoutButton = document.getElementById("layoutToggle");
+  if (layoutButton) {
+    layoutButton.addEventListener("click", () => {
+      useCircleOfFifths = !useCircleOfFifths;
+      arrangeCircles(useCircleOfFifths);
+      layoutButton.textContent = useCircleOfFifths ? "Circle of Fifths" : "Chromatic";
+    });
+  }
   window.switchText = function(element) {
     const swaps = {
       "B\u266D": "A\u266F",

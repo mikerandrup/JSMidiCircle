@@ -35,13 +35,19 @@ function arrangeCircles(useCoF) {
     }
 }
 
-arrangeCircles(true);
+// Layout state: true = Circle of Fifths, false = Chromatic
+let useCircleOfFifths = true;
+arrangeCircles(useCircleOfFifths);
 
-let layout = true;
-window.switchLayout = function() {
-    layout = !layout;
-    arrangeCircles(layout);
-};
+// Layout toggle button
+const layoutButton = document.getElementById('layoutToggle');
+if (layoutButton) {
+    layoutButton.addEventListener('click', () => {
+        useCircleOfFifths = !useCircleOfFifths;
+        arrangeCircles(useCircleOfFifths);
+        layoutButton.textContent = useCircleOfFifths ? 'Circle of Fifths' : 'Chromatic';
+    });
+}
 
 window.switchText = function(element) {
     const swaps = {

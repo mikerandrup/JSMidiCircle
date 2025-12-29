@@ -79,6 +79,53 @@ svg > g > circle {
     stroke-width: 4;
 }
 
+#controls {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+}
+
+.button-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+#layoutToggle {
+    padding: 0.5em 1em;
+    font-size: 14px;
+    cursor: pointer;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+#layoutToggle:hover {
+    background: #555;
+}
+
+.tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5em;
+    width: 280px;
+    padding: 1em;
+    background: #222;
+    color: white;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: 4px;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+
+.button-wrapper:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
 
 </style>
 </head>
@@ -145,7 +192,7 @@ svg > g > circle {
 
   <!-- spacer -->
 
-  <circle id="button1" onclick='switchLayout()' class="clickable" cx="125" cy="125", r="60", fill="white"/>
+  <circle id="centerCircle" cx="125" cy="125" r="60" fill="white"/>
 
 
   <defs>
@@ -155,7 +202,19 @@ svg > g > circle {
         </linearGradient>
   </defs>
 </svg>
-<div id="infobox">Click the middle of the circle to switch layout (Circle of Fifths or chromatic).<br>Click on a note with an accidental to switch between sharps and flats.<div>
+<div id="infobox">Click on a note with an accidental to switch between sharps and flats.</div>
+
+<div id="controls">
+    <div class="button-wrapper">
+        <button id="layoutToggle">Circle of Fifths</button>
+        <div class="tooltip">
+            <strong>Circle of Fifths</strong>: Notes arranged by musical fifths (C→G→D→A...).
+            Adjacent notes sound harmonically related - great for understanding chord progressions and key relationships.
+            <br><br>
+            <strong>Chromatic</strong>: Notes arranged by semitones (C→C#→D→D#...),
+            matching the linear layout of a piano keyboard.
+        </div>
+    </div>
 </div>
 <script>
 setTimeout(function () {
