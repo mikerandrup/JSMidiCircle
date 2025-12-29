@@ -3,18 +3,16 @@
   <title>WebMidi Circle Of Fifths</title>
     <meta charset="utf-8"/>
 <style>
-#infobox {
+#midiStatus {
     position: absolute;
     bottom: 0;
+    left: 0;
     margin: .5em;
     padding: .5em;
     background: black;
     color: white;
     font-family: monospace;
-}
-#infobox:hover {
-    opacity: 1;
-    transition: opacity .5s ease-out;
+    font-size: 12px;
 }
 .on {fill: url("#NoteOnGradient");}
 .partial {fill: #ddd;}
@@ -236,27 +234,23 @@ svg > g > circle {
         </linearGradient>
   </defs>
 </svg>
-<div id="infobox">Click on a note with an accidental to switch between sharps and flats.</div>
+<div id="midiStatus"></div>
 <div id="credit">Original by <a href="https://github.com/RasmusMathiesen/JSMidiCircle" target="_blank">RasmusMathiesen</a></div>
 
 <div id="controls">
     <div class="button-wrapper">
-        <button id="layoutToggle">Circle of Fifths</button>
+        <button id="layoutToggle">Circle of Fifths ❓</button>
         <div class="tooltip">
             <strong>Circle of Fifths</strong>: Notes arranged by musical fifths (C→G→D→A...).
             Adjacent notes sound harmonically related - great for understanding chord progressions and key relationships.
             <br><br>
             <strong>Chromatic</strong>: Notes arranged by semitones (C→C#→D→D#...),
             matching the linear layout of a piano keyboard.
+            <br><br>
+            <strong>Tip</strong>: Click notes with accidentals (D♭, E♭, etc.) to toggle between sharp/flat names.
         </div>
     </div>
 </div>
-<script>
-setTimeout(function () {
-    var sheet = window.document.styleSheets[0];
-    sheet.insertRule('#infobox { opacity: 0; transition: opacity 2s}', sheet.cssRules.length);
-}, 5000);
-</script>
 <script src="dist/bundle.js"></script>
 </body>
 </html>

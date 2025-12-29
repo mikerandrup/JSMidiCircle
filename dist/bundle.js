@@ -2064,7 +2064,7 @@
     layoutButton.addEventListener("click", () => {
       useCircleOfFifths = !useCircleOfFifths;
       arrangeCircles(useCircleOfFifths);
-      layoutButton.textContent = useCircleOfFifths ? "Circle of Fifths" : "Chromatic";
+      layoutButton.textContent = useCircleOfFifths ? "Circle of Fifths \u2753" : "Chromatic \u2753";
     });
   }
   window.switchText = function(element) {
@@ -2085,11 +2085,10 @@
     }
   };
   function showStatus(message, isError = false) {
-    const infobox = document.getElementById("infobox");
-    if (infobox) {
-      infobox.innerHTML = message;
-      infobox.style.opacity = "1";
-      infobox.style.background = isError ? "#660000" : "black";
+    const midiStatus = document.getElementById("midiStatus");
+    if (midiStatus) {
+      midiStatus.innerHTML = message;
+      midiStatus.style.background = isError ? "#660000" : "black";
     }
     if (isError) {
       console.error("[JSMidiCircle]", message);
