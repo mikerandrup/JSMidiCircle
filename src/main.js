@@ -110,31 +110,6 @@ function initMidi() {
         const chordQuality = document.getElementById('chordQuality');
         let chordTimeout = null;
 
-        // Map chord type symbols to full words
-        const CHORD_QUALITY_NAMES = {
-            'M': 'major',
-            'm': 'minor',
-            'dim': 'diminished',
-            'aug': 'augmented',
-            'sus4': 'suspended 4',
-            'sus2': 'suspended 2',
-            '7': 'dominant 7',
-            'M7': 'major 7',
-            'm7': 'minor 7',
-            'dim7': 'diminished 7',
-            'm7b5': 'half diminished',
-            'mM7': 'minor major 7',
-            'aug7': 'augmented 7',
-            '6': 'major 6',
-            'm6': 'minor 6',
-            '9': 'dominant 9',
-            'M9': 'major 9',
-            'm9': 'minor 9',
-            'add9': 'add 9',
-            'madd9': 'minor add 9',
-            '7sus4': 'dominant 7 sus4'
-        };
-
         // Convert note name to chromatic index (0-11)
         function noteToIndex(noteName) {
             const base = noteName.charAt(0).toUpperCase();
@@ -151,29 +126,6 @@ function initMidi() {
             return root
                 .replace(/#/g, ' sharp')
                 .replace(/b/g, ' flat');
-        }
-
-        // Get full quality name from chord type
-        function getQualityName(chordType) {
-            // Try exact match first
-            if (CHORD_QUALITY_NAMES[chordType]) {
-                return CHORD_QUALITY_NAMES[chordType];
-            }
-            // Handle compound types (e.g., "m7b5")
-            for (const [symbol, name] of Object.entries(CHORD_QUALITY_NAMES)) {
-                if (chordType === symbol) return name;
-            }
-            // Fallback: return the type as-is but expand common patterns
-            return chordType
-                .replace(/^M$/, 'major')
-                .replace(/^m$/, 'minor')
-                .replace(/maj/gi, 'major ')
-                .replace(/min/gi, 'minor ')
-                .replace(/dim/gi, 'diminished ')
-                .replace(/aug/gi, 'augmented ')
-                .replace(/sus/gi, 'suspended ')
-                .replace(/add/gi, 'add ')
-                .trim();
         }
 
         function detectAndDisplayChord() {
@@ -206,19 +158,19 @@ function initMidi() {
                     const chordName = detected[0];
                     const chordInfo = Chord.get(chordName);
 
-                    if (chordInfo && chordInfo.notes) {
-                        // Highlight only the chord tones
-                        const chordNoteIndices = chordInfo.notes.map(noteToIndex);
-                        chordNoteIndices.forEach(idx => {
-                            if (noteArray[idx] !== 0) {
-                                circles[idx].setAttribute('class', 'on');
-                            }
-                        });
+                    if (chordInfo && chordInfo.tonic) {
+                        // Highlight only the root note
+                        const rootIndex = noteToIndex(chordInfo.tonic);
+                        if (noteArray[rootIndex] !== 0) {
+                            circles[rootIndex].setAttribute('class', 'on');
+                        }
 
                         // Display formatted chord name
                         if (chordRoot && chordQuality) {
-                            chordRoot.textContent = formatRoot(chordInfo.tonic || '');
-                            chordQuality.textContent = getQualityName(chordInfo.type || '');
+                            chordRoot.textContent = formatRoot(chordInfo.tonic);
+                            // Use chordInfo.type directly - tonal returns readable names
+                            const quality = chordInfo.type || '';
+                            chordQuality.textContent = quality;
                         }
                     }
                 }

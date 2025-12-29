@@ -2120,29 +2120,6 @@
       const chordRoot = document.getElementById("chordRoot");
       const chordQuality = document.getElementById("chordQuality");
       let chordTimeout = null;
-      const CHORD_QUALITY_NAMES = {
-        "M": "major",
-        "m": "minor",
-        "dim": "diminished",
-        "aug": "augmented",
-        "sus4": "suspended 4",
-        "sus2": "suspended 2",
-        "7": "dominant 7",
-        "M7": "major 7",
-        "m7": "minor 7",
-        "dim7": "diminished 7",
-        "m7b5": "half diminished",
-        "mM7": "minor major 7",
-        "aug7": "augmented 7",
-        "6": "major 6",
-        "m6": "minor 6",
-        "9": "dominant 9",
-        "M9": "major 9",
-        "m9": "minor 9",
-        "add9": "add 9",
-        "madd9": "minor add 9",
-        "7sus4": "dominant 7 sus4"
-      };
       function noteToIndex(noteName) {
         const base = noteName.charAt(0).toUpperCase();
         const accidental = noteName.slice(1);
@@ -2154,15 +2131,6 @@
       }
       function formatRoot(root) {
         return root.replace(/#/g, " sharp").replace(/b/g, " flat");
-      }
-      function getQualityName(chordType) {
-        if (CHORD_QUALITY_NAMES[chordType]) {
-          return CHORD_QUALITY_NAMES[chordType];
-        }
-        for (const [symbol, name2] of Object.entries(CHORD_QUALITY_NAMES)) {
-          if (chordType === symbol) return name2;
-        }
-        return chordType.replace(/^M$/, "major").replace(/^m$/, "minor").replace(/maj/gi, "major ").replace(/min/gi, "minor ").replace(/dim/gi, "diminished ").replace(/aug/gi, "augmented ").replace(/sus/gi, "suspended ").replace(/add/gi, "add ").trim();
       }
       function detectAndDisplayChord() {
         const activeNotes = [];
@@ -2187,16 +2155,15 @@
           if (detected.length > 0) {
             const chordName = detected[0];
             const chordInfo = dist_exports.get(chordName);
-            if (chordInfo && chordInfo.notes) {
-              const chordNoteIndices = chordInfo.notes.map(noteToIndex);
-              chordNoteIndices.forEach((idx) => {
-                if (noteArray[idx] !== 0) {
-                  circles[idx].setAttribute("class", "on");
-                }
-              });
+            if (chordInfo && chordInfo.tonic) {
+              const rootIndex = noteToIndex(chordInfo.tonic);
+              if (noteArray[rootIndex] !== 0) {
+                circles[rootIndex].setAttribute("class", "on");
+              }
               if (chordRoot && chordQuality) {
-                chordRoot.textContent = formatRoot(chordInfo.tonic || "");
-                chordQuality.textContent = getQualityName(chordInfo.type || "");
+                chordRoot.textContent = formatRoot(chordInfo.tonic);
+                const quality = chordInfo.type || "";
+                chordQuality.textContent = quality;
               }
             }
           }
