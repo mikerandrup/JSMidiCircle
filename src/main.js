@@ -1,4 +1,8 @@
 import WebMidi from 'webmidi';
+import { Chord } from 'tonal';
+
+// Note names for chord detection (chromatic, 0-11)
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 // DOM elements
 const circles = [];
@@ -102,6 +106,26 @@ function initMidi() {
         const input = WebMidi.inputs[0];
         let sustainPedal = false;
         const noteArray = new Array(12).fill(0);
+        const chordDisplay = document.getElementById('chordDisplay');
+        let chordTimeout = null;
+
+        function detectAndDisplayChord() {
+            const activeNotes = [];
+            for (let i = 0; i < 12; i++) {
+                if (noteArray[i] !== 0) {
+                    activeNotes.push(NOTE_NAMES[i]);
+                }
+            }
+
+            if (chordDisplay) {
+                if (activeNotes.length >= 3) {
+                    const detected = Chord.detect(activeNotes);
+                    chordDisplay.textContent = detected[0] || '';
+                } else {
+                    chordDisplay.textContent = '';
+                }
+            }
+        }
 
         function updateNote(state, e) {
             const note = e.note.number % 12;
@@ -124,6 +148,10 @@ function initMidi() {
                 }
                 circles[note].setAttribute('data-n', noteArray[note]);
             }
+
+            // Debounced chord detection
+            clearTimeout(chordTimeout);
+            chordTimeout = setTimeout(detectAndDisplayChord, 40);
         }
 
         input.addListener('noteon', 'all', e => updateNote('on', e));
@@ -142,6 +170,7 @@ function initMidi() {
                                 circles[index].setAttribute('data-n', 0);
                             }
                         });
+                        detectAndDisplayChord();
                     }
                 }
             }
