@@ -4,7 +4,9 @@
   "description": "WebMIDI Circle of Fifths visualizer",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "build": "esbuild src/main.js --bundle --outfile=dist/bundle.js --format=iife",
+    "start": "npm run build && node server.js",
+    "dev": "node server.js"
   },
   "keywords": [
     "midi",
@@ -16,6 +18,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "webmidi": "^2.5.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
   }
 }

@@ -1,8 +1,7 @@
 <html>
 <head>
   <title>WebMidi Circle Of Fifths</title>
-  <script src="https://cdn.jsdelivr.net/npm/webmidi"></script>
-  <meta charset="utf-8"/>
+    <meta charset="utf-8"/>
 <style>
 #infobox {
     position: absolute;
@@ -160,10 +159,10 @@ svg > g > circle {
 </div>
 <script>
 setTimeout(function () {
-var sheet = window.document.styleSheets[0];
-sheet.insertRule('#infobox { opacity: 0; transition: opacity 2s}', sheet.cssRules.length);
-}, 5000)
+    var sheet = window.document.styleSheets[0];
+    sheet.insertRule('#infobox { opacity: 0; transition: opacity 2s}', sheet.cssRules.length);
+}, 5000);
 </script>
-<script src="main.js"></script>
+<script src="dist/bundle.js"></script>
 </body>
 </html>
