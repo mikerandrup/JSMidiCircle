@@ -17,6 +17,7 @@
     transition: opacity .5s ease-out;
 }
 .on {fill: url("#NoteOnGradient");}
+.partial {fill: #ddd;}
 .off {fill: white;}
 .clickable {cursor: pointer;}
 html, body {
@@ -193,9 +194,9 @@ svg > g > circle {
   <!-- spacer -->
 
   <circle id="centerCircle" cx="125" cy="125" r="60" fill="white"/>
-  <text id="chordDisplay" x="125" y="125"
-        text-anchor="middle" dominant-baseline="central"
-        font-size="20" font-weight="bold" font-family="sans-serif">
+  <text id="chordDisplay" text-anchor="middle" font-family="sans-serif">
+      <tspan id="chordRoot" x="125" y="118" font-size="28" font-weight="bold"></tspan>
+      <tspan id="chordQuality" x="125" y="140" font-size="13"></tspan>
   </text>
 
   <defs>

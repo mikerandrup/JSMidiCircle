@@ -106,23 +106,121 @@ function initMidi() {
         const input = WebMidi.inputs[0];
         let sustainPedal = false;
         const noteArray = new Array(12).fill(0);
-        const chordDisplay = document.getElementById('chordDisplay');
+        const chordRoot = document.getElementById('chordRoot');
+        const chordQuality = document.getElementById('chordQuality');
         let chordTimeout = null;
 
+        // Map chord type symbols to full words
+        const CHORD_QUALITY_NAMES = {
+            'M': 'major',
+            'm': 'minor',
+            'dim': 'diminished',
+            'aug': 'augmented',
+            'sus4': 'suspended 4',
+            'sus2': 'suspended 2',
+            '7': 'dominant 7',
+            'M7': 'major 7',
+            'm7': 'minor 7',
+            'dim7': 'diminished 7',
+            'm7b5': 'half diminished',
+            'mM7': 'minor major 7',
+            'aug7': 'augmented 7',
+            '6': 'major 6',
+            'm6': 'minor 6',
+            '9': 'dominant 9',
+            'M9': 'major 9',
+            'm9': 'minor 9',
+            'add9': 'add 9',
+            'madd9': 'minor add 9',
+            '7sus4': 'dominant 7 sus4'
+        };
+
+        // Convert note name to chromatic index (0-11)
+        function noteToIndex(noteName) {
+            const base = noteName.charAt(0).toUpperCase();
+            const accidental = noteName.slice(1);
+            const baseIndex = { 'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11 }[base];
+            let offset = 0;
+            if (accidental.includes('#')) offset = accidental.split('#').length - 1;
+            if (accidental.includes('b')) offset = -(accidental.split('b').length - 1);
+            return (baseIndex + offset + 12) % 12;
+        }
+
+        // Format root note - expand accidentals
+        function formatRoot(root) {
+            return root
+                .replace(/#/g, ' sharp')
+                .replace(/b/g, ' flat');
+        }
+
+        // Get full quality name from chord type
+        function getQualityName(chordType) {
+            // Try exact match first
+            if (CHORD_QUALITY_NAMES[chordType]) {
+                return CHORD_QUALITY_NAMES[chordType];
+            }
+            // Handle compound types (e.g., "m7b5")
+            for (const [symbol, name] of Object.entries(CHORD_QUALITY_NAMES)) {
+                if (chordType === symbol) return name;
+            }
+            // Fallback: return the type as-is but expand common patterns
+            return chordType
+                .replace(/^M$/, 'major')
+                .replace(/^m$/, 'minor')
+                .replace(/maj/gi, 'major ')
+                .replace(/min/gi, 'minor ')
+                .replace(/dim/gi, 'diminished ')
+                .replace(/aug/gi, 'augmented ')
+                .replace(/sus/gi, 'suspended ')
+                .replace(/add/gi, 'add ')
+                .trim();
+        }
+
         function detectAndDisplayChord() {
+            // Get all active note names
             const activeNotes = [];
+            const activeIndices = [];
             for (let i = 0; i < 12; i++) {
                 if (noteArray[i] !== 0) {
                     activeNotes.push(NOTE_NAMES[i]);
+                    activeIndices.push(i);
                 }
             }
 
-            if (chordDisplay) {
-                if (activeNotes.length >= 3) {
-                    const detected = Chord.detect(activeNotes);
-                    chordDisplay.textContent = detected[0] || '';
+            // Reset all circles to appropriate state
+            for (let i = 0; i < 12; i++) {
+                if (noteArray[i] !== 0) {
+                    circles[i].setAttribute('class', 'partial');
                 } else {
-                    chordDisplay.textContent = '';
+                    circles[i].setAttribute('class', 'off');
+                }
+            }
+
+            // Clear chord display by default
+            if (chordRoot) chordRoot.textContent = '';
+            if (chordQuality) chordQuality.textContent = '';
+
+            if (activeNotes.length >= 3) {
+                const detected = Chord.detect(activeNotes);
+                if (detected.length > 0) {
+                    const chordName = detected[0];
+                    const chordInfo = Chord.get(chordName);
+
+                    if (chordInfo && chordInfo.notes) {
+                        // Highlight only the chord tones
+                        const chordNoteIndices = chordInfo.notes.map(noteToIndex);
+                        chordNoteIndices.forEach(idx => {
+                            if (noteArray[idx] !== 0) {
+                                circles[idx].setAttribute('class', 'on');
+                            }
+                        });
+
+                        // Display formatted chord name
+                        if (chordRoot && chordQuality) {
+                            chordRoot.textContent = formatRoot(chordInfo.tonic || '');
+                            chordQuality.textContent = getQualityName(chordInfo.type || '');
+                        }
+                    }
                 }
             }
         }
@@ -134,17 +232,18 @@ function initMidi() {
                 noteArray[note]++;
                 if (noteArray[note] === 0) noteArray[note] = 1;
                 circles[note].setAttribute('data-n', noteArray[note]);
+                // Initially show as partial until chord detection runs
                 if (noteArray[note] === 1) {
-                    circles[note].setAttribute('class', 'on');
+                    circles[note].setAttribute('class', 'partial');
                 }
             } else {
                 noteArray[note]--;
                 if (noteArray[note] === 0) {
                     if (sustainPedal) {
                         noteArray[note] = -1;
-                        state = 'on';
+                    } else {
+                        circles[note].setAttribute('class', 'off');
                     }
-                    circles[note].setAttribute('class', state === 'on' ? 'on' : 'off');
                 }
                 circles[note].setAttribute('data-n', noteArray[note]);
             }
