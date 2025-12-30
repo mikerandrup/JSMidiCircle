@@ -675,15 +675,15 @@
     return group;
   }
   function generateRing(ringKey, svgElement) {
-    const centerCircle = svgElement.querySelector("#centerCircle");
-    if (!centerCircle) {
-      console.error("[JSMidiCircle] centerCircle not found in SVG");
+    const chordDisplay = svgElement.querySelector("#chordDisplay");
+    if (!chordDisplay) {
+      console.error("[JSMidiCircle] chordDisplay not found in SVG");
       return;
     }
     console.log(`[JSMidiCircle] Generating ${ringKey} ring...`);
     for (let i = 0; i < 12; i++) {
       const group = createNoteGroup(ringKey, i);
-      svgElement.insertBefore(group, centerCircle);
+      svgElement.insertBefore(group, chordDisplay);
     }
     console.log(`[JSMidiCircle] ${ringKey} ring generated`);
   }

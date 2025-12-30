@@ -75,7 +75,7 @@ g[data-ring="major"] > circle[data-n="4"] {
 g[data-ring="minor"] > text {
     font: bold 11px sans-serif;
     cursor: default;
-    letter-spacing: -0.5px;
+    letter-spacing: -1.5px;
 }
 
 g[data-ring="minor"] > circle {
