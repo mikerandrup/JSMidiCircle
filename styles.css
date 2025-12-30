@@ -26,49 +26,107 @@ svg > g > circle {
 }
 
 /* Note states */
-.on { fill: url("#NoteOnGradient"); }
+.on {
+    fill: url("#NoteOnGradient");
+    animation: vibrate 0.08s linear infinite;
+}
 .partial { fill: #ddd; }
 .off { fill: white; }
+
+/* Subtle vibration for active chord root */
+@keyframes vibrate {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(0.5px, -0.5px); }
+    50% { transform: translate(-0.5px, 0.5px); }
+    75% { transform: translate(0.5px, 0.5px); }
+}
 
 .cover {
     fill-opacity: 0;
     fill: white;
 }
 
-/* Note intensity (stroke width based on octaves pressed) */
-[data-n="-1"] {
+/* Major ring (outer) intensity - stroke width based on octaves pressed */
+g[data-ring="major"] > circle[data-n="-1"] {
     stroke-width: 2;
     fill-opacity: 0;
     fill: url("#NoteOnGradient");
     transition: fill-opacity 10s cubic-bezier(.1,1,1,1);
 }
 
-[data-n="0"] {
+g[data-ring="major"] > circle[data-n="0"] {
     stroke-width: 2;
     transition-duration: 10s;
 }
 
-[data-n="0"].on + .cover {
+g[data-ring="major"] > circle[data-n="0"].on + .cover {
     fill-opacity: 1;
     transition: fill-opacity .5s;
 }
 
-[data-n="1"] {
+g[data-ring="major"] > circle[data-n="1"] {
     stroke-width: 2.25;
     fill-opacity: 1;
 }
 
-[data-n="2"] {
+g[data-ring="major"] > circle[data-n="2"] {
     stroke-width: 3;
     fill-opacity: 1;
 }
 
-[data-n="3"] {
+g[data-ring="major"] > circle[data-n="3"] {
     stroke-width: 3.5;
 }
 
-[data-n="4"] {
+g[data-ring="major"] > circle[data-n="4"] {
     stroke-width: 4;
+}
+
+/* Inner ring (minor) specific styles */
+g[data-ring="minor"] > text {
+    font: bold 11px sans-serif;
+    cursor: default;
+    letter-spacing: -1.5px;
+}
+
+g[data-ring="minor"] > circle {
+    transition-property: fill-opacity;
+}
+
+/* Inner ring intensity (thinner strokes for smaller circles) */
+g[data-ring="minor"] > circle[data-n="-1"] {
+    stroke-width: 1.5;
+    fill-opacity: 0;
+    fill: url("#NoteOnGradient");
+    transition: fill-opacity 10s cubic-bezier(.1,1,1,1);
+}
+
+g[data-ring="minor"] > circle[data-n="0"] {
+    stroke-width: 1.5;
+    transition-duration: 10s;
+}
+
+g[data-ring="minor"] > circle[data-n="0"].on + .cover {
+    fill-opacity: 1;
+    transition: fill-opacity .5s;
+}
+
+g[data-ring="minor"] > circle[data-n="1"] {
+    stroke-width: 1.75;
+    fill-opacity: 1;
+}
+
+g[data-ring="minor"] > circle[data-n="2"] {
+    stroke-width: 2.25;
+    fill-opacity: 1;
+}
+
+g[data-ring="minor"] > circle[data-n="3"] {
+    stroke-width: 2.75;
+}
+
+g[data-ring="minor"] > circle[data-n="4"] {
+    stroke-width: 3;
 }
 
 /* Controls (top right buttons) */

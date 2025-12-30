@@ -1,30 +1,44 @@
 // MIDI handling using WebMidi
 import WebMidi from 'webmidi';
 import { state } from './state.js';
-import { circles } from './dom.js';
+import { rings } from './dom.js';
+import { RING_ORDER } from './constants.js';
 import { showStatus } from './status.js';
 import { detectAndDisplayChord } from './chordDetection.js';
 import { playNote, stopNote } from './audio.js';
 
-// Update note state on noteon/noteoff
+// Update note state on noteon/noteoff - updates ALL rings
 function updateNote(noteState, e) {
     const note = e.note.number % 12;
     const midiNote = e.note.number;  // Full MIDI note for audio
 
     if (noteState === 'on') {
         state.noteArray[note]++;
-        circles[note].setAttribute('data-n', state.noteArray[note]);
-        // Initially show as partial until chord detection runs
-        if (state.noteArray[note] === 1) {
-            circles[note].setAttribute('class', 'partial');
+
+        // Update circles in all rings
+        for (const ringKey of RING_ORDER) {
+            const circle = rings[ringKey]?.circles[note];
+            if (circle) {
+                circle.setAttribute('data-n', state.noteArray[note]);
+                if (state.noteArray[note] === 1) {
+                    circle.setAttribute('class', 'partial');
+                }
+            }
         }
         playNote(midiNote);
     } else {
         state.noteArray[note]--;
-        if (state.noteArray[note] === 0) {
-            circles[note].setAttribute('class', 'off');
+
+        // Update circles in all rings
+        for (const ringKey of RING_ORDER) {
+            const circle = rings[ringKey]?.circles[note];
+            if (circle) {
+                circle.setAttribute('data-n', state.noteArray[note]);
+                if (state.noteArray[note] === 0) {
+                    circle.setAttribute('class', 'off');
+                }
+            }
         }
-        circles[note].setAttribute('data-n', state.noteArray[note]);
         stopNote(midiNote);
     }
 

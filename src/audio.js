@@ -49,16 +49,22 @@ export function stopNote(midiNote) {
     if (!activeOscillators.has(midiNote)) return;
 
     const { osc, gain } = activeOscillators.get(midiNote);
+    const now = audioCtx.currentTime;
+    const releaseTime = 0.08;  // 80ms release
 
-    // Gentle release to avoid clicks
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+    // Cancel any scheduled changes and set current value as anchor point
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
 
-    // Stop oscillator after release
+    // Exponential ramp sounds more natural (can't ramp to exactly 0)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + releaseTime);
+
+    // Stop oscillator after release completes
     setTimeout(() => {
         osc.stop();
         osc.disconnect();
         gain.disconnect();
-    }, 60);
+    }, releaseTime * 1000 + 10);
 
     activeOscillators.delete(midiNote);
 }

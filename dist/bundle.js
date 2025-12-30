@@ -544,56 +544,6 @@
     }
   });
 
-  // src/dom.js
-  var circles = [];
-  var svgGroups = [];
-  function initDom() {
-    for (let i = 1; i < 13; i++) {
-      circles.push(document.getElementById("c" + i));
-      svgGroups.push(document.getElementById("g" + i));
-    }
-    circles.forEach((circle) => {
-      circle.insertAdjacentHTML("afterend", '<circle cx="0" cy="0" r="21" class="cover"/>');
-    });
-  }
-  var _chordElements = null;
-  function getChordElements() {
-    if (!_chordElements) {
-      _chordElements = {
-        root: document.getElementById("chordRoot"),
-        quality: document.getElementById("chordQuality"),
-        inversion: document.getElementById("chordInversion")
-      };
-    }
-    return _chordElements;
-  }
-
-  // src/state.js
-  var state = {
-    noteArray: new Array(12).fill(0),
-    chordTimeout: null,
-    useCircleOfFifths: true,
-    useFlats: false
-    // true = flats (D♭), false = sharps (C♯)
-  };
-
-  // src/geometry.js
-  function chromToCOF(index4) {
-    return index4 * 7 % 12;
-  }
-  function indexToCoordinates(index4) {
-    const angle = (index4 - 3) * (2 * Math.PI / 12);
-    const x = Math.cos(angle) * 100 + 125;
-    const y = Math.sin(angle) * 100 + 125;
-    return [x, y];
-  }
-  function arrangeCircles(useCoF) {
-    for (let i = 0; i < 12; i++) {
-      const xy = useCoF ? indexToCoordinates(chromToCOF(i)) : indexToCoordinates(i);
-      svgGroups[i].setAttribute("transform", `translate(${xy[0].toFixed(3)},${xy[1].toFixed(3)})`);
-    }
-  }
-
   // src/constants.js
   var NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
   var NOTE_DISPLAY = {
@@ -633,6 +583,215 @@
   function formatForDisplay(text) {
     return text.replace(/#/g, "\u266F").replace(/b/g, "\u266D");
   }
+  var MINOR_TRIADS = {
+    flats: [
+      { name: "C minor", recipe: "C   Eb   G" },
+      { name: "Db minor", recipe: "Db   E   Ab" },
+      { name: "D minor", recipe: "D   F   A" },
+      { name: "Eb minor", recipe: "Eb   Gb   Bb" },
+      { name: "E minor", recipe: "E   G   B" },
+      { name: "F minor", recipe: "F   Ab   C" },
+      { name: "Gb minor", recipe: "Gb   A   Db" },
+      { name: "G minor", recipe: "G   Bb   D" },
+      { name: "Ab minor", recipe: "Ab   B   Eb" },
+      { name: "A minor", recipe: "A   C   E" },
+      { name: "Bb minor", recipe: "Bb   Db   F" },
+      { name: "B minor", recipe: "B   D   F#" }
+    ],
+    sharps: [
+      { name: "C minor", recipe: "C   D#   G" },
+      { name: "C# minor", recipe: "C#   E   G#" },
+      { name: "D minor", recipe: "D   F   A" },
+      { name: "D# minor", recipe: "D#   F#   A#" },
+      { name: "E minor", recipe: "E   G   B" },
+      { name: "F minor", recipe: "F   G#   C" },
+      { name: "F# minor", recipe: "F#   A   C#" },
+      { name: "G minor", recipe: "G   A#   D" },
+      { name: "G# minor", recipe: "G#   B   D#" },
+      { name: "A minor", recipe: "A   C   E" },
+      { name: "A# minor", recipe: "A#   C#   F" },
+      { name: "B minor", recipe: "B   D   F#" }
+    ]
+  };
+  var RING_CONFIG = {
+    major: {
+      idPrefix: "c",
+      // circle IDs: c1-c12
+      groupPrefix: "g",
+      // group IDs: g1-g12
+      radius: 100,
+      // distance from center to circle centers
+      circleRadius: 22,
+      // radius of each note circle
+      strokeWidth: 2,
+      fontSize: 20,
+      triadsKey: "major"
+    },
+    minor: {
+      idPrefix: "cm",
+      // circle IDs: cm1-cm12
+      groupPrefix: "gm",
+      // group IDs: gm1-gm12
+      radius: 55,
+      // inner ring, closer to center
+      circleRadius: 14,
+      // smaller circles
+      strokeWidth: 1.5,
+      fontSize: 11,
+      triadsKey: "minor"
+    }
+  };
+  var RING_ORDER = ["major", "minor"];
+  var TRIAD_DATA = {
+    major: MAJOR_TRIADS,
+    minor: MINOR_TRIADS
+  };
+
+  // src/svgGenerator.js
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  function createNoteGroup(ringKey, chromIndex) {
+    const config = RING_CONFIG[ringKey];
+    const groupId = `${config.groupPrefix}${chromIndex + 1}`;
+    const circleId = `${config.idPrefix}${chromIndex + 1}`;
+    const group = document.createElementNS(SVG_NS, "g");
+    group.setAttribute("id", groupId);
+    group.setAttribute("data-ring", ringKey);
+    group.setAttribute("data-chrom", String(chromIndex));
+    const circle = document.createElementNS(SVG_NS, "circle");
+    circle.setAttribute("class", "off");
+    circle.setAttribute("id", circleId);
+    circle.setAttribute("cx", "0");
+    circle.setAttribute("cy", "0");
+    circle.setAttribute("r", String(config.circleRadius));
+    circle.setAttribute("stroke", "black");
+    circle.setAttribute("stroke-width", String(config.strokeWidth));
+    circle.setAttribute("data-n", "0");
+    const text = document.createElementNS(SVG_NS, "text");
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("alignment-baseline", "central");
+    text.textContent = "";
+    group.appendChild(circle);
+    group.appendChild(text);
+    return group;
+  }
+  function generateRing(ringKey, svgElement) {
+    const chordDisplay = svgElement.querySelector("#chordDisplay");
+    if (!chordDisplay) {
+      console.error("[JSMidiCircle] chordDisplay not found in SVG");
+      return;
+    }
+    console.log(`[JSMidiCircle] Generating ${ringKey} ring...`);
+    for (let i = 0; i < 12; i++) {
+      const group = createNoteGroup(ringKey, i);
+      svgElement.insertBefore(group, chordDisplay);
+    }
+    console.log(`[JSMidiCircle] ${ringKey} ring generated`);
+  }
+
+  // src/dom.js
+  var rings = {};
+  var circles = [];
+  var svgGroups = [];
+  function initDom() {
+    const svg = document.querySelector("svg");
+    if (!svg) {
+      console.error("[JSMidiCircle] SVG element not found");
+      return;
+    }
+    for (const ringKey of RING_ORDER) {
+      const config = RING_CONFIG[ringKey];
+      rings[ringKey] = { circles: [], groups: [] };
+      if (ringKey === "minor") {
+        const firstMinorGroup = document.getElementById(`${config.groupPrefix}1`);
+        if (!firstMinorGroup) {
+          generateRing("minor", svg);
+        }
+      }
+      for (let i = 1; i <= 12; i++) {
+        const circle = document.getElementById(`${config.idPrefix}${i}`);
+        const group = document.getElementById(`${config.groupPrefix}${i}`);
+        if (group) {
+          group.setAttribute("data-ring", ringKey);
+          group.setAttribute("data-chrom", String(i - 1));
+        }
+        rings[ringKey].circles.push(circle);
+        rings[ringKey].groups.push(group);
+      }
+      const coverRadius = config.circleRadius - 1;
+      rings[ringKey].circles.forEach((circle) => {
+        if (circle) {
+          circle.insertAdjacentHTML(
+            "afterend",
+            `<circle cx="0" cy="0" r="${coverRadius}" class="cover"/>`
+          );
+        }
+      });
+    }
+    rings.major.circles.forEach((c) => circles.push(c));
+    rings.major.groups.forEach((g) => svgGroups.push(g));
+    const majorCount = rings.major.circles.filter((c) => c !== null).length;
+    const minorCount = rings.minor.circles.filter((c) => c !== null).length;
+    console.log(`[JSMidiCircle] DOM initialized: ${majorCount} major, ${minorCount} minor circles`);
+  }
+  var _chordElements = null;
+  function getChordElements() {
+    if (!_chordElements) {
+      _chordElements = {
+        root: document.getElementById("chordRoot"),
+        quality: document.getElementById("chordQuality"),
+        inversion: document.getElementById("chordInversion")
+      };
+    }
+    return _chordElements;
+  }
+
+  // src/state.js
+  var state = {
+    noteArray: new Array(12).fill(0),
+    chordTimeout: null,
+    useCircleOfFifths: true,
+    useFlats: false
+    // true = flats (D♭), false = sharps (C♯)
+  };
+
+  // src/geometry.js
+  var CENTER = 125;
+  function chromToCOF(index4) {
+    return index4 * 7 % 12;
+  }
+  function indexToCoordinates(index4, radius = 100) {
+    const angle = (index4 - 3) * (2 * Math.PI / 12);
+    const x = Math.cos(angle) * radius + CENTER;
+    const y = Math.sin(angle) * radius + CENTER;
+    return [x, y];
+  }
+  function arrangeCircles(useCoF) {
+    for (const ringKey of RING_ORDER) {
+      const config = RING_CONFIG[ringKey];
+      const groups = rings[ringKey]?.groups;
+      if (!groups) continue;
+      for (let chromIndex = 0; chromIndex < 12; chromIndex++) {
+        const group = groups[chromIndex];
+        if (!group) continue;
+        let positionIndex;
+        if (ringKey === "major") {
+          positionIndex = useCoF ? chromToCOF(chromIndex) : chromIndex;
+        } else {
+          if (useCoF) {
+            const relativeMajorChrom = (chromIndex + 3) % 12;
+            positionIndex = chromToCOF(relativeMajorChrom);
+          } else {
+            positionIndex = chromIndex;
+          }
+        }
+        const [x, y] = indexToCoordinates(positionIndex, config.radius);
+        group.setAttribute(
+          "transform",
+          `translate(${x.toFixed(3)},${y.toFixed(3)})`
+        );
+      }
+    }
+  }
 
   // src/layout.js
   function initLayout() {
@@ -649,13 +808,17 @@
   function updateAccidentals() {
     const mode = state.useFlats ? "flats" : "sharps";
     const noteNames = NOTE_DISPLAY[mode];
-    const triads3 = MAJOR_TRIADS[mode];
-    for (let i = 0; i < 12; i++) {
-      const group = svgGroups[i];
-      if (!group) continue;
-      const text = group.querySelector("text");
-      if (text) {
-        text.textContent = noteNames[i];
+    for (const ringKey of RING_ORDER) {
+      const groups = rings[ringKey]?.groups;
+      if (!groups) continue;
+      const isMinor = ringKey === "minor";
+      for (let i = 0; i < 12; i++) {
+        const group = groups[i];
+        if (!group) continue;
+        const text = group.querySelector("text");
+        if (text) {
+          text.textContent = isMinor ? noteNames[i] + "m" : noteNames[i];
+        }
       }
     }
   }
@@ -674,24 +837,30 @@
   function initNoteTooltips() {
     const tooltip = document.getElementById("noteTooltip");
     if (!tooltip) return;
-    for (let i = 0; i < 12; i++) {
-      const group = svgGroups[i];
-      if (!group) continue;
-      group.addEventListener("mouseenter", (e) => {
-        const mode = state.useFlats ? "flats" : "sharps";
-        const triad = MAJOR_TRIADS[mode][i];
-        const recipe = formatForDisplay(triad.recipe);
-        const name2 = formatForDisplay(triad.name);
-        tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name2}</div>`;
-        tooltip.classList.add("visible");
-        positionTooltip(e, tooltip);
-      });
-      group.addEventListener("mousemove", (e) => {
-        positionTooltip(e, tooltip);
-      });
-      group.addEventListener("mouseleave", () => {
-        tooltip.classList.remove("visible");
-      });
+    for (const ringKey of RING_ORDER) {
+      const groups = rings[ringKey]?.groups;
+      if (!groups) continue;
+      const triadsKey = RING_CONFIG[ringKey].triadsKey;
+      for (let i = 0; i < 12; i++) {
+        const group = groups[i];
+        if (!group) continue;
+        group.addEventListener("mouseenter", (e) => {
+          const mode = state.useFlats ? "flats" : "sharps";
+          const triads3 = TRIAD_DATA[triadsKey][mode];
+          const triad = triads3[i];
+          const recipe = formatForDisplay(triad.recipe);
+          const name2 = formatForDisplay(triad.name);
+          tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name2}</div>`;
+          tooltip.classList.add("visible");
+          positionTooltip(e, tooltip);
+        });
+        group.addEventListener("mousemove", (e) => {
+          positionTooltip(e, tooltip);
+        });
+        group.addEventListener("mouseleave", () => {
+          tooltip.classList.remove("visible");
+        });
+      }
     }
   }
   function positionTooltip(e, tooltip) {
@@ -2217,7 +2386,6 @@
     return NOTE_DISPLAY[mode][index4];
   }
   function selectBestChord(detected) {
-    const dominated = ["major", "minor", "M", "m", ""];
     for (const chordName of detected) {
       const info = dist_exports.get(chordName);
       if (info && info.type) {
@@ -2231,6 +2399,11 @@
     }
     return detected[0];
   }
+  function isMinorChord(chordType) {
+    if (!chordType) return false;
+    const lowerType = chordType.toLowerCase();
+    return lowerType === "minor" || lowerType === "m" || lowerType.startsWith("minor") || lowerType.startsWith("m") && !lowerType.startsWith("maj");
+  }
   function detectAndDisplayChord() {
     const chordElements = getChordElements();
     const activeNotes = [];
@@ -2239,11 +2412,17 @@
         activeNotes.push(NOTE_NAMES[i]);
       }
     }
-    for (let i = 0; i < 12; i++) {
-      if (state.noteArray[i] !== 0) {
-        circles[i].setAttribute("class", "partial");
-      } else {
-        circles[i].setAttribute("class", "off");
+    for (const ringKey of RING_ORDER) {
+      const ringCircles = rings[ringKey]?.circles;
+      if (!ringCircles) continue;
+      for (let i = 0; i < 12; i++) {
+        const circle = ringCircles[i];
+        if (!circle) continue;
+        if (state.noteArray[i] !== 0) {
+          circle.setAttribute("class", "partial");
+        } else {
+          circle.setAttribute("class", "off");
+        }
       }
     }
     if (chordElements.root) chordElements.root.textContent = "";
@@ -2261,13 +2440,17 @@
         const chordInfo = dist_exports.get(chordName);
         if (chordInfo && chordInfo.tonic) {
           const rootIndex = noteToIndex(chordInfo.tonic);
+          const chordType = chordInfo.type || "";
           if (state.noteArray[rootIndex] !== 0) {
-            circles[rootIndex].setAttribute("class", "on");
+            const targetRing = isMinorChord(chordType) ? "minor" : "major";
+            const targetCircle = rings[targetRing]?.circles[rootIndex];
+            if (targetCircle) {
+              targetCircle.setAttribute("class", "on");
+            }
           }
           if (chordElements.root && chordElements.quality) {
             chordElements.root.textContent = formatNote(chordInfo.tonic);
-            const quality = chordInfo.type || "";
-            chordElements.quality.textContent = quality;
+            chordElements.quality.textContent = chordType;
           }
           if (chordElements.inversion && chordName.includes("/")) {
             const bassNote = chordName.split("/")[1];
@@ -2323,12 +2506,16 @@
   function stopNote(midiNote) {
     if (!activeOscillators.has(midiNote)) return;
     const { osc, gain } = activeOscillators.get(midiNote);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+    const now = audioCtx.currentTime;
+    const releaseTime = 0.08;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.exponentialRampToValueAtTime(1e-3, now + releaseTime);
     setTimeout(() => {
       osc.stop();
       osc.disconnect();
       gain.disconnect();
-    }, 60);
+    }, releaseTime * 1e3 + 10);
     activeOscillators.delete(midiNote);
   }
   function stopAllNotes() {
@@ -2360,17 +2547,27 @@
     const midiNote = e.note.number;
     if (noteState === "on") {
       state.noteArray[note2]++;
-      circles[note2].setAttribute("data-n", state.noteArray[note2]);
-      if (state.noteArray[note2] === 1) {
-        circles[note2].setAttribute("class", "partial");
+      for (const ringKey of RING_ORDER) {
+        const circle = rings[ringKey]?.circles[note2];
+        if (circle) {
+          circle.setAttribute("data-n", state.noteArray[note2]);
+          if (state.noteArray[note2] === 1) {
+            circle.setAttribute("class", "partial");
+          }
+        }
       }
       playNote(midiNote);
     } else {
       state.noteArray[note2]--;
-      if (state.noteArray[note2] === 0) {
-        circles[note2].setAttribute("class", "off");
+      for (const ringKey of RING_ORDER) {
+        const circle = rings[ringKey]?.circles[note2];
+        if (circle) {
+          circle.setAttribute("data-n", state.noteArray[note2]);
+          if (state.noteArray[note2] === 0) {
+            circle.setAttribute("class", "off");
+          }
+        }
       }
-      circles[note2].setAttribute("data-n", state.noteArray[note2]);
       stopNote(midiNote);
     }
     clearTimeout(state.chordTimeout);
@@ -2419,15 +2616,15 @@
     };
     return enharmonics[a] === b || enharmonics[b] === a;
   }
-  function testChord(name2, recipe) {
+  function testChord(name2, recipe, expectedType) {
     const notes2 = parseRecipe(recipe);
     const detected = dist_exports.detect(notes2);
     const expectedRoot = name2.split(" ")[0];
     for (const chordName of detected) {
       const info = dist_exports.get(chordName);
       if (info && info.tonic) {
-        const isMajor = info.type === "major" || info.type === "";
-        if (isMajor) {
+        const isExpectedType = expectedType === "major" ? info.type === "major" || info.type === "" : info.type === "minor";
+        if (isExpectedType) {
           if (info.tonic === expectedRoot || areEnharmonic(info.tonic, expectedRoot)) {
             return { pass: true, detected: chordName, info };
           }
@@ -2439,22 +2636,31 @@
   function runChordTests() {
     console.group("\u{1F3B9} Chord Formula Verification");
     let failures = 0;
-    for (const mode of ["sharps", "flats"]) {
-      console.group(`${mode.toUpperCase()} mode`);
-      const labels = NOTE_DISPLAY[mode];
-      for (let i = 0; i < MAJOR_TRIADS[mode].length; i++) {
-        const triad = MAJOR_TRIADS[mode][i];
-        const label = labels[i];
-        const notes2 = parseRecipe(triad.recipe);
-        const displayNotes = notes2.map((n) => formatForDisplay(n));
-        const result = testChord(triad.name, triad.recipe);
-        if (result.pass) {
-          const detectedName = formatForDisplay(result.info.tonic) + " " + (result.info.type || "major");
-          console.log(`\u2713 (${label}) - [${displayNotes.join(", ")}] -> ${detectedName}`);
-        } else {
-          failures++;
-          console.error(`\u2717 (${label}) - [${displayNotes.join(", ")}] -> detected as: ${result.detected.join(", ")}`);
+    const chordTypes = [
+      { name: "MAJOR", triads: MAJOR_TRIADS, type: "major" },
+      { name: "MINOR", triads: MINOR_TRIADS, type: "minor" }
+    ];
+    for (const chordType of chordTypes) {
+      console.group(`${chordType.name} TRIADS`);
+      for (const mode of ["sharps", "flats"]) {
+        console.group(`${mode}`);
+        const labels = NOTE_DISPLAY[mode];
+        for (let i = 0; i < chordType.triads[mode].length; i++) {
+          const triad = chordType.triads[mode][i];
+          const label = chordType.type === "minor" ? labels[i] + "m" : labels[i];
+          const notes2 = parseRecipe(triad.recipe);
+          const displayNotes = notes2.map((n) => formatForDisplay(n));
+          const result = testChord(triad.name, triad.recipe, chordType.type);
+          if (result.pass) {
+            const typeName = result.info.type || "major";
+            const detectedName = formatForDisplay(result.info.tonic) + " " + typeName;
+            console.log(`\u2713 (${label}) - [${displayNotes.join(", ")}] -> ${detectedName}`);
+          } else {
+            failures++;
+            console.error(`\u2717 (${label}) - [${displayNotes.join(", ")}] -> detected as: ${result.detected.join(", ")}`);
+          }
         }
+        console.groupEnd();
       }
       console.groupEnd();
     }

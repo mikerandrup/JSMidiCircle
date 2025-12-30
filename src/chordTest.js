@@ -1,6 +1,6 @@
 // Chord formula verification - runs on startup, results in browser console
 import { Chord } from 'tonal';
-import { MAJOR_TRIADS, NOTE_DISPLAY, formatForDisplay } from './constants.js';
+import { MAJOR_TRIADS, MINOR_TRIADS, NOTE_DISPLAY, formatForDisplay } from './constants.js';
 
 // Parse recipe string into array of notes
 function parseRecipe(recipe) {
@@ -19,8 +19,8 @@ function areEnharmonic(a, b) {
     return enharmonics[a] === b || enharmonics[b] === a;
 }
 
-// Test a single chord formula
-function testChord(name, recipe) {
+// Test a single chord formula (supports major or minor)
+function testChord(name, recipe, expectedType) {
     const notes = parseRecipe(recipe);
     const detected = Chord.detect(notes);
     const expectedRoot = name.split(' ')[0];
@@ -28,8 +28,11 @@ function testChord(name, recipe) {
     for (const chordName of detected) {
         const info = Chord.get(chordName);
         if (info && info.tonic) {
-            const isMajor = info.type === 'major' || info.type === '';
-            if (isMajor) {
+            const isExpectedType = expectedType === 'major'
+                ? (info.type === 'major' || info.type === '')
+                : (info.type === 'minor');
+
+            if (isExpectedType) {
                 if (info.tonic === expectedRoot || areEnharmonic(info.tonic, expectedRoot)) {
                     return { pass: true, detected: chordName, info };
                 }
@@ -46,24 +49,37 @@ export function runChordTests() {
 
     let failures = 0;
 
-    for (const mode of ['sharps', 'flats']) {
-        console.group(`${mode.toUpperCase()} mode`);
-        const labels = NOTE_DISPLAY[mode];
+    // Test both chord types
+    const chordTypes = [
+        { name: 'MAJOR', triads: MAJOR_TRIADS, type: 'major' },
+        { name: 'MINOR', triads: MINOR_TRIADS, type: 'minor' }
+    ];
 
-        for (let i = 0; i < MAJOR_TRIADS[mode].length; i++) {
-            const triad = MAJOR_TRIADS[mode][i];
-            const label = labels[i];
-            const notes = parseRecipe(triad.recipe);
-            const displayNotes = notes.map(n => formatForDisplay(n));
-            const result = testChord(triad.name, triad.recipe);
+    for (const chordType of chordTypes) {
+        console.group(`${chordType.name} TRIADS`);
 
-            if (result.pass) {
-                const detectedName = formatForDisplay(result.info.tonic) + ' ' + (result.info.type || 'major');
-                console.log(`✓ (${label}) - [${displayNotes.join(', ')}] -> ${detectedName}`);
-            } else {
-                failures++;
-                console.error(`✗ (${label}) - [${displayNotes.join(', ')}] -> detected as: ${result.detected.join(', ')}`);
+        for (const mode of ['sharps', 'flats']) {
+            console.group(`${mode}`);
+            const labels = NOTE_DISPLAY[mode];
+
+            for (let i = 0; i < chordType.triads[mode].length; i++) {
+                const triad = chordType.triads[mode][i];
+                const label = chordType.type === 'minor' ? labels[i] + 'm' : labels[i];
+                const notes = parseRecipe(triad.recipe);
+                const displayNotes = notes.map(n => formatForDisplay(n));
+                const result = testChord(triad.name, triad.recipe, chordType.type);
+
+                if (result.pass) {
+                    const typeName = result.info.type || 'major';
+                    const detectedName = formatForDisplay(result.info.tonic) + ' ' + typeName;
+                    console.log(`✓ (${label}) - [${displayNotes.join(', ')}] -> ${detectedName}`);
+                } else {
+                    failures++;
+                    console.error(`✗ (${label}) - [${displayNotes.join(', ')}] -> detected as: ${result.detected.join(', ')}`);
+                }
             }
+
+            console.groupEnd();
         }
 
         console.groupEnd();
