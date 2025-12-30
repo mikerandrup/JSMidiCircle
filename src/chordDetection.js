@@ -1,6 +1,6 @@
 // Chord detection using tonal.js
 import { Chord } from 'tonal';
-import { NOTE_NAMES } from './constants.js';
+import { NOTE_NAMES, NOTE_DISPLAY } from './constants.js';
 import { state } from './state.js';
 import { circles, getChordElements } from './dom.js';
 
@@ -15,11 +15,11 @@ export function noteToIndex(noteName) {
     return (baseIndex + offset + 12) % 12;
 }
 
-// Format root note - expand accidentals for display
-export function formatRoot(root) {
-    return root
-        .replace(/#/g, ' sharp')
-        .replace(/b/g, ' flat');
+// Format note name according to accidental preference
+export function formatNote(noteName) {
+    const index = noteToIndex(noteName);
+    const mode = state.useFlats ? 'flats' : 'sharps';
+    return NOTE_DISPLAY[mode][index];
 }
 
 // Detect and display chord from active notes
@@ -70,7 +70,7 @@ export function detectAndDisplayChord() {
 
                 // Display formatted chord name
                 if (chordElements.root && chordElements.quality) {
-                    chordElements.root.textContent = formatRoot(chordInfo.tonic);
+                    chordElements.root.textContent = formatNote(chordInfo.tonic);
                     const quality = chordInfo.type || '';
                     chordElements.quality.textContent = quality;
                 }
@@ -91,7 +91,7 @@ export function detectAndDisplayChord() {
                     } else if (interval === 10 || interval === 11) {
                         inversionText = '3rd inversion (7th in bass)';
                     } else {
-                        inversionText = formatRoot(bassNote) + ' in bass';
+                        inversionText = formatNote(bassNote) + ' in bass';
                     }
                     chordElements.inversion.textContent = inversionText;
                 }

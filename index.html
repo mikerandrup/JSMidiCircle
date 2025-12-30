@@ -17,7 +17,6 @@
 .on {fill: url("#NoteOnGradient");}
 .partial {fill: #ddd;}
 .off {fill: white;}
-.clickable {cursor: pointer;}
 html, body {
   margin:0px;
   /* padding:20px; */
@@ -87,9 +86,14 @@ svg > g > circle {
 .button-wrapper {
     position: relative;
     display: inline-block;
+    margin-left: 0.5em;
 }
 
-#layoutToggle {
+.button-wrapper:first-child {
+    margin-left: 0;
+}
+
+#layoutToggle, #accidentalsToggle {
     padding: 0.5em 1em;
     font-size: 14px;
     cursor: pointer;
@@ -97,9 +101,11 @@ svg > g > circle {
     color: white;
     border: none;
     border-radius: 4px;
+    height: 36px;
+    line-height: 1;
 }
 
-#layoutToggle:hover {
+#layoutToggle:hover, #accidentalsToggle:hover {
     background: #555;
 }
 
@@ -156,7 +162,7 @@ svg > g > circle {
   <g id="g2" transform="translate(175,38.4)">
       <title>D♭ major: D♭ - F - A♭</title>
       <circle class="off" id="c2"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-      <text class="clickable" text-anchor="middle" alignment-baseline="central" onclick='switchText(this)'>D♭</text>
+      <text text-anchor="middle" alignment-baseline="central">D♭</text>
   </g>
   <g id="g3" transform="translate(211.6,75)">
       <title>D major: D - F♯ - A</title>
@@ -169,7 +175,7 @@ svg > g > circle {
   <g id="g4" transform="translate(225,125)">
       <title>E♭ major: E♭ - G - B♭</title>
       <circle class="off" id="c4"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-      <text class="clickable" text-anchor="middle" alignment-baseline="central" onclick='switchText(this)'>E♭</text>
+      <text text-anchor="middle" alignment-baseline="central">E♭</text>
   </g>
   <g id="g5" transform="translate(211.6,175)">
       <title>E major: E - G♯ - B</title>
@@ -187,7 +193,7 @@ svg > g > circle {
   <g id="g7" transform="translate(125,225)">
       <title>G♭ major: G♭ - B♭ - D♭</title>
       <circle class="off" id="c7"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-      <text class="clickable" text-anchor="middle" alignment-baseline="central" onclick='switchText(this)'>G♭</text>
+      <text text-anchor="middle" alignment-baseline="central">G♭</text>
   </g>
   <g id="g8" transform="translate(75,211.6)">
       <title>G major: G - B - D</title>
@@ -197,7 +203,7 @@ svg > g > circle {
   <g id="g9" transform="translate(38.4,175)">
       <title>A♭ major: A♭ - C - E♭</title>
       <circle class="off" id="c9"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-      <text class="clickable" text-anchor="middle" alignment-baseline="central" onclick='switchText(this)'>A♭</text>
+      <text text-anchor="middle" alignment-baseline="central">A♭</text>
   </g>
 
   <!-- spacer -->
@@ -210,7 +216,7 @@ svg > g > circle {
   <g id="g11" transform="translate(38.4,75)">
       <title>B♭ major: B♭ - D - F</title>
       <circle class="off" id="c11" cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-      <text class="clickable" text-anchor="middle" alignment-baseline="central" onclick='switchText(this)'>B♭</text>
+      <text text-anchor="middle" alignment-baseline="central">B♭</text>
   </g>
   <g id="g12" transform="translate(75,38.4)">
       <title>B major: B - D♯ - F♯</title>
@@ -239,15 +245,23 @@ svg > g > circle {
 
 <div id="controls">
     <div class="button-wrapper">
-        <button id="layoutToggle">Circle of Fifths ❓</button>
+        <button id="layoutToggle">Circle of Fifths</button>
         <div class="tooltip">
             <strong>Circle of Fifths</strong>: Notes arranged by musical fifths (C→G→D→A...).
             Adjacent notes sound harmonically related - great for understanding chord progressions and key relationships.
             <br><br>
             <strong>Chromatic</strong>: Notes arranged by semitones (C→C#→D→D#...),
             matching the linear layout of a piano keyboard.
+        </div>
+    </div>
+    <div class="button-wrapper">
+        <button id="accidentalsToggle">♭ Flats</button>
+        <div class="tooltip">
+            <strong>Accidentals</strong>: Toggle how black keys are displayed.
             <br><br>
-            <strong>Tip</strong>: Click notes with accidentals (D♭, E♭, etc.) to toggle between sharp/flat names.
+            <strong>Flats (♭)</strong>: D♭, E♭, G♭, A♭, B♭ - common in jazz and classical.
+            <br><br>
+            <strong>Sharps (♯)</strong>: C♯, D♯, F♯, G♯, A♯ - common in rock and pop.
         </div>
     </div>
 </div>

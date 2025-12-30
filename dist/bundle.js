@@ -572,7 +572,9 @@
   var state = {
     noteArray: new Array(12).fill(0),
     chordTimeout: null,
-    useCircleOfFifths: true
+    useCircleOfFifths: true,
+    useFlats: true
+    // true = flats (D♭), false = sharps (C#)
   };
 
   // src/geometry.js
@@ -592,6 +594,43 @@
     }
   }
 
+  // src/constants.js
+  var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var NOTE_DISPLAY = {
+    flats: ["C", "D\u266D", "D", "E\u266D", "E", "F", "G\u266D", "G", "A\u266D", "A", "B\u266D", "B"],
+    sharps: ["C", "C\u266F", "D", "D\u266F", "E", "F", "F\u266F", "G", "G\u266F", "A", "A\u266F", "B"]
+  };
+  var MAJOR_TRIADS = {
+    flats: [
+      "C major: C - E - G",
+      "D\u266D major: D\u266D - F - A\u266D",
+      "D major: D - F\u266F - A",
+      "E\u266D major: E\u266D - G - B\u266D",
+      "E major: E - G\u266F - B",
+      "F major: F - A - C",
+      "G\u266D major: G\u266D - B\u266D - D\u266D",
+      "G major: G - B - D",
+      "A\u266D major: A\u266D - C - E\u266D",
+      "A major: A - C\u266F - E",
+      "B\u266D major: B\u266D - D - F",
+      "B major: B - D\u266F - F\u266F"
+    ],
+    sharps: [
+      "C major: C - E - G",
+      "C\u266F major: C\u266F - E\u266F - G\u266F",
+      "D major: D - F\u266F - A",
+      "D\u266F major: D\u266F - F\u{1D12A} - A\u266F",
+      "E major: E - G\u266F - B",
+      "F major: F - A - C",
+      "F\u266F major: F\u266F - A\u266F - C\u266F",
+      "G major: G - B - D",
+      "G\u266F major: G\u266F - B\u266F - D\u266F",
+      "A major: A - C\u266F - E",
+      "A\u266F major: A\u266F - C\u{1D12A} - E\u266F",
+      "B major: B - D\u266F - F\u266F"
+    ]
+  };
+
   // src/layout.js
   function initLayout() {
     arrangeCircles(state.useCircleOfFifths);
@@ -600,25 +639,36 @@
       layoutButton.addEventListener("click", () => {
         state.useCircleOfFifths = !state.useCircleOfFifths;
         arrangeCircles(state.useCircleOfFifths);
-        layoutButton.textContent = state.useCircleOfFifths ? "Circle of Fifths \u2753" : "Chromatic \u2753";
+        layoutButton.textContent = state.useCircleOfFifths ? "Circle of Fifths" : "Chromatic";
       });
     }
   }
-  function switchText(element) {
-    const swaps = {
-      "B\u266D": "A\u266F",
-      "A\u266F": "B\u266D",
-      "A\u266D": "G\u266F",
-      "G\u266F": "A\u266D",
-      "G\u266D": "F\u266F",
-      "F\u266F": "G\u266D",
-      "E\u266D": "D\u266F",
-      "D\u266F": "E\u266D",
-      "D\u266D": "C\u266F",
-      "C\u266F": "D\u266D"
-    };
-    if (swaps[element.textContent]) {
-      element.textContent = swaps[element.textContent];
+  function updateAccidentals() {
+    const mode = state.useFlats ? "flats" : "sharps";
+    const noteNames = NOTE_DISPLAY[mode];
+    const triads3 = MAJOR_TRIADS[mode];
+    for (let i = 0; i < 12; i++) {
+      const group = svgGroups[i];
+      if (!group) continue;
+      const text = group.querySelector("text");
+      if (text) {
+        text.textContent = noteNames[i];
+      }
+      const title = group.querySelector("title");
+      if (title) {
+        title.textContent = triads3[i];
+      }
+    }
+  }
+  function initAccidentals() {
+    updateAccidentals();
+    const accidentalsButton = document.getElementById("accidentalsToggle");
+    if (accidentalsButton) {
+      accidentalsButton.addEventListener("click", () => {
+        state.useFlats = !state.useFlats;
+        accidentalsButton.textContent = state.useFlats ? "\u266D Flats" : "\u266F Sharps";
+        updateAccidentals();
+      });
     }
   }
 
@@ -2123,9 +2173,6 @@
   }
   var isNamed = deprecate("isNamed", "isNamedPitch", isNamedPitch);
 
-  // src/constants.js
-  var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
   // src/chordDetection.js
   function noteToIndex(noteName) {
     const base = noteName.charAt(0).toUpperCase();
@@ -2136,8 +2183,10 @@
     if (accidental.includes("b")) offset = -(accidental.split("b").length - 1);
     return (baseIndex + offset + 12) % 12;
   }
-  function formatRoot(root) {
-    return root.replace(/#/g, " sharp").replace(/b/g, " flat");
+  function formatNote(noteName) {
+    const index4 = noteToIndex(noteName);
+    const mode = state.useFlats ? "flats" : "sharps";
+    return NOTE_DISPLAY[mode][index4];
   }
   function detectAndDisplayChord() {
     const chordElements = getChordElements();
@@ -2173,7 +2222,7 @@
             circles[rootIndex].setAttribute("class", "on");
           }
           if (chordElements.root && chordElements.quality) {
-            chordElements.root.textContent = formatRoot(chordInfo.tonic);
+            chordElements.root.textContent = formatNote(chordInfo.tonic);
             const quality = chordInfo.type || "";
             chordElements.quality.textContent = quality;
           }
@@ -2190,7 +2239,7 @@
             } else if (interval2 === 10 || interval2 === 11) {
               inversionText = "3rd inversion (7th in bass)";
             } else {
-              inversionText = formatRoot(bassNote) + " in bass";
+              inversionText = formatNote(bassNote) + " in bass";
             }
             chordElements.inversion.textContent = inversionText;
           }
@@ -2245,6 +2294,6 @@
   // src/main.js
   initDom();
   initLayout();
-  window.switchText = switchText;
+  initAccidentals();
   initMidi();
 })();
