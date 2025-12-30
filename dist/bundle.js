@@ -48,8 +48,8 @@
             return !(!this.interface || !this.interface.sysexEnabled);
           }.bind(this) }, nrpnEventsEnabled: { enumerable: true, get: function() {
             return !!this._nrpnEventsEnabled;
-          }.bind(this), set: function(enabled) {
-            return this._nrpnEventsEnabled = enabled, this._nrpnEventsEnabled;
+          }.bind(this), set: function(enabled2) {
+            return this._nrpnEventsEnabled = enabled2, this._nrpnEventsEnabled;
           } }, nrpnTypes: { enumerable: true, get: function() {
             return this._nrpnTypes;
           }.bind(this) }, time: { enumerable: true, get: function() {
@@ -2291,21 +2291,87 @@
     }
   }
 
+  // src/audio.js
+  var audioCtx = null;
+  var enabled = false;
+  var activeOscillators = /* @__PURE__ */ new Map();
+  function midiToFrequency(midiNote) {
+    return 440 * Math.pow(2, (midiNote - 69) / 12);
+  }
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+  }
+  function playNote(midiNote) {
+    if (!enabled || !audioCtx) return;
+    if (activeOscillators.has(midiNote)) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = midiToFrequency(midiNote);
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    activeOscillators.set(midiNote, { osc, gain });
+  }
+  function stopNote(midiNote) {
+    if (!activeOscillators.has(midiNote)) return;
+    const { osc, gain } = activeOscillators.get(midiNote);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+    setTimeout(() => {
+      osc.stop();
+      osc.disconnect();
+      gain.disconnect();
+    }, 60);
+    activeOscillators.delete(midiNote);
+  }
+  function stopAllNotes() {
+    for (const midiNote of activeOscillators.keys()) {
+      stopNote(midiNote);
+    }
+  }
+  function setEnabled(value) {
+    enabled = value;
+    if (enabled) {
+      ensureAudioContext();
+    } else {
+      stopAllNotes();
+    }
+  }
+  function initAudio() {
+    const button = document.getElementById("soundToggle");
+    if (button) {
+      button.addEventListener("click", () => {
+        setEnabled(!enabled);
+        button.textContent = enabled ? "\u{1F50A} Sound" : "\u{1F507} Sound";
+      });
+    }
+  }
+
   // src/midiHandler.js
   function updateNote(noteState, e) {
     const note2 = e.note.number % 12;
+    const midiNote = e.note.number;
     if (noteState === "on") {
       state.noteArray[note2]++;
       circles[note2].setAttribute("data-n", state.noteArray[note2]);
       if (state.noteArray[note2] === 1) {
         circles[note2].setAttribute("class", "partial");
       }
+      playNote(midiNote);
     } else {
       state.noteArray[note2]--;
       if (state.noteArray[note2] === 0) {
         circles[note2].setAttribute("class", "off");
       }
       circles[note2].setAttribute("data-n", state.noteArray[note2]);
+      stopNote(midiNote);
     }
     clearTimeout(state.chordTimeout);
     state.chordTimeout = setTimeout(detectAndDisplayChord, 40);
@@ -2406,4 +2472,5 @@
   initLayout();
   initAccidentals();
   initMidi();
+  initAudio();
 })();

@@ -4,6 +4,7 @@
 import { initDom } from './dom.js';
 import { initLayout, initAccidentals } from './layout.js';
 import { initMidi } from './midiHandler.js';
+import { initAudio } from './audio.js';
 import { runChordTests } from './chordTest.js';
 
 // Verify chord formulas on startup (check browser console)
@@ -20,3 +21,6 @@ initAccidentals();
 
 // Initialize MIDI
 initMidi();
+
+// Initialize audio toggle
+initAudio();
