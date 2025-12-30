@@ -573,8 +573,8 @@
     noteArray: new Array(12).fill(0),
     chordTimeout: null,
     useCircleOfFifths: true,
-    useFlats: true
-    // true = flats (D♭), false = sharps (C#)
+    useFlats: false
+    // true = flats (D♭), false = sharps (C♯)
   };
 
   // src/geometry.js
