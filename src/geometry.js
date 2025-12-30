@@ -1,5 +1,8 @@
 // Circle positioning and geometry calculations
-import { svgGroups } from './dom.js';
+import { rings } from './dom.js';
+import { RING_CONFIG, RING_ORDER } from './constants.js';
+
+const CENTER = 125;
 
 // Convert chromatic index to Circle of Fifths position (and vice versa)
 export function chromToCOF(index) {
@@ -7,17 +10,46 @@ export function chromToCOF(index) {
 }
 
 // Convert circle position (0=top, clockwise) to x,y coordinates
-export function indexToCoordinates(index) {
+// radius parameter allows different ring sizes
+export function indexToCoordinates(index, radius = 100) {
     const angle = (index - 3) * ((2 * Math.PI) / 12);
-    const x = Math.cos(angle) * 100 + 125;
-    const y = Math.sin(angle) * 100 + 125;
+    const x = Math.cos(angle) * radius + CENTER;
+    const y = Math.sin(angle) * radius + CENTER;
     return [x, y];
 }
 
-// Arrange circles in Circle of Fifths or chromatic order
+// Arrange all rings in Circle of Fifths or chromatic order
 export function arrangeCircles(useCoF) {
-    for (let i = 0; i < 12; i++) {
-        const xy = useCoF ? indexToCoordinates(chromToCOF(i)) : indexToCoordinates(i);
-        svgGroups[i].setAttribute('transform', `translate(${xy[0].toFixed(3)},${xy[1].toFixed(3)})`);
+    for (const ringKey of RING_ORDER) {
+        const config = RING_CONFIG[ringKey];
+        const groups = rings[ringKey]?.groups;
+        if (!groups) continue;
+
+        for (let chromIndex = 0; chromIndex < 12; chromIndex++) {
+            const group = groups[chromIndex];
+            if (!group) continue;
+
+            let positionIndex;
+            if (ringKey === 'major') {
+                // Major ring: standard CoF or chromatic positioning
+                positionIndex = useCoF ? chromToCOF(chromIndex) : chromIndex;
+            } else {
+                // Minor ring positioning
+                if (useCoF) {
+                    // Relative minor at same visual position as its relative major
+                    // Am (chromIndex=9) should appear inside C (position 0)
+                    // Relative major is 3 semitones up: (9+3)%12 = 0 = C
+                    const relativeMajorChrom = (chromIndex + 3) % 12;
+                    positionIndex = chromToCOF(relativeMajorChrom);
+                } else {
+                    // Parallel minor directly inside its parallel major
+                    positionIndex = chromIndex;
+                }
+            }
+
+            const [x, y] = indexToCoordinates(positionIndex, config.radius);
+            group.setAttribute('transform',
+                `translate(${x.toFixed(3)},${y.toFixed(3)})`);
+        }
     }
 }

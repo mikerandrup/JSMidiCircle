@@ -1,8 +1,8 @@
 // Layout toggle and accidental switching
 import { state } from './state.js';
 import { arrangeCircles } from './geometry.js';
-import { NOTE_DISPLAY, MAJOR_TRIADS, formatForDisplay } from './constants.js';
-import { svgGroups } from './dom.js';
+import { NOTE_DISPLAY, RING_CONFIG, RING_ORDER, TRIAD_DATA, formatForDisplay } from './constants.js';
+import { rings } from './dom.js';
 
 // Initialize layout with current state
 export function initLayout() {
@@ -19,20 +19,27 @@ export function initLayout() {
     }
 }
 
-// Update all note labels and tooltips based on accidental preference
+// Update all note labels based on accidental preference (for all rings)
 export function updateAccidentals() {
     const mode = state.useFlats ? 'flats' : 'sharps';
     const noteNames = NOTE_DISPLAY[mode];
-    const triads = MAJOR_TRIADS[mode];
 
-    for (let i = 0; i < 12; i++) {
-        const group = svgGroups[i];
-        if (!group) continue;
+    for (const ringKey of RING_ORDER) {
+        const groups = rings[ringKey]?.groups;
+        if (!groups) continue;
 
-        // Update text label
-        const text = group.querySelector('text');
-        if (text) {
-            text.textContent = noteNames[i];
+        const isMinor = ringKey === 'minor';
+
+        for (let i = 0; i < 12; i++) {
+            const group = groups[i];
+            if (!group) continue;
+
+            // Update text label
+            const text = group.querySelector('text');
+            if (text) {
+                // Minor notes get 'm' suffix
+                text.textContent = isMinor ? noteNames[i] + 'm' : noteNames[i];
+            }
         }
     }
 }
@@ -52,36 +59,44 @@ export function initAccidentals() {
         });
     }
 
-    // Set up note hover tooltips
+    // Set up note hover tooltips for all rings
     initNoteTooltips();
 }
 
-// Initialize hover tooltips for note circles
+// Initialize hover tooltips for note circles (all rings)
 function initNoteTooltips() {
     const tooltip = document.getElementById('noteTooltip');
     if (!tooltip) return;
 
-    for (let i = 0; i < 12; i++) {
-        const group = svgGroups[i];
-        if (!group) continue;
+    for (const ringKey of RING_ORDER) {
+        const groups = rings[ringKey]?.groups;
+        if (!groups) continue;
 
-        group.addEventListener('mouseenter', (e) => {
-            const mode = state.useFlats ? 'flats' : 'sharps';
-            const triad = MAJOR_TRIADS[mode][i];
-            const recipe = formatForDisplay(triad.recipe);
-            const name = formatForDisplay(triad.name);
-            tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name}</div>`;
-            tooltip.classList.add('visible');
-            positionTooltip(e, tooltip);
-        });
+        const triadsKey = RING_CONFIG[ringKey].triadsKey;
 
-        group.addEventListener('mousemove', (e) => {
-            positionTooltip(e, tooltip);
-        });
+        for (let i = 0; i < 12; i++) {
+            const group = groups[i];
+            if (!group) continue;
 
-        group.addEventListener('mouseleave', () => {
-            tooltip.classList.remove('visible');
-        });
+            group.addEventListener('mouseenter', (e) => {
+                const mode = state.useFlats ? 'flats' : 'sharps';
+                const triads = TRIAD_DATA[triadsKey][mode];
+                const triad = triads[i];
+                const recipe = formatForDisplay(triad.recipe);
+                const name = formatForDisplay(triad.name);
+                tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name}</div>`;
+                tooltip.classList.add('visible');
+                positionTooltip(e, tooltip);
+            });
+
+            group.addEventListener('mousemove', (e) => {
+                positionTooltip(e, tooltip);
+            });
+
+            group.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+        }
     }
 }
 

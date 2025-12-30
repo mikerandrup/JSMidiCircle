@@ -47,3 +47,67 @@ export const MAJOR_TRIADS = {
 export function formatForDisplay(text) {
     return text.replace(/#/g, '♯').replace(/b/g, '♭');
 }
+
+// Minor triads for tooltips (indexed by chromatic position)
+// Formula: root, minor 3rd (3 semitones), perfect 5th (7 semitones)
+export const MINOR_TRIADS = {
+    flats: [
+        { name: 'C minor', recipe: 'C   Eb   G' },
+        { name: 'Db minor', recipe: 'Db   E   Ab' },
+        { name: 'D minor', recipe: 'D   F   A' },
+        { name: 'Eb minor', recipe: 'Eb   Gb   Bb' },
+        { name: 'E minor', recipe: 'E   G   B' },
+        { name: 'F minor', recipe: 'F   Ab   C' },
+        { name: 'Gb minor', recipe: 'Gb   A   Db' },
+        { name: 'G minor', recipe: 'G   Bb   D' },
+        { name: 'Ab minor', recipe: 'Ab   B   Eb' },
+        { name: 'A minor', recipe: 'A   C   E' },
+        { name: 'Bb minor', recipe: 'Bb   Db   F' },
+        { name: 'B minor', recipe: 'B   D   F#' }
+    ],
+    sharps: [
+        { name: 'C minor', recipe: 'C   D#   G' },
+        { name: 'C# minor', recipe: 'C#   E   G#' },
+        { name: 'D minor', recipe: 'D   F   A' },
+        { name: 'D# minor', recipe: 'D#   F#   A#' },
+        { name: 'E minor', recipe: 'E   G   B' },
+        { name: 'F minor', recipe: 'F   G#   C' },
+        { name: 'F# minor', recipe: 'F#   A   C#' },
+        { name: 'G minor', recipe: 'G   A#   D' },
+        { name: 'G# minor', recipe: 'G#   B   D#' },
+        { name: 'A minor', recipe: 'A   C   E' },
+        { name: 'A# minor', recipe: 'A#   C#   F' },
+        { name: 'B minor', recipe: 'B   D   F#' }
+    ]
+};
+
+// Ring configuration - defines layout and behavior for each ring
+export const RING_CONFIG = {
+    major: {
+        idPrefix: 'c',           // circle IDs: c1-c12
+        groupPrefix: 'g',        // group IDs: g1-g12
+        radius: 100,             // distance from center to circle centers
+        circleRadius: 22,        // radius of each note circle
+        strokeWidth: 2,
+        fontSize: 20,
+        triadsKey: 'major'
+    },
+    minor: {
+        idPrefix: 'cm',          // circle IDs: cm1-cm12
+        groupPrefix: 'gm',       // group IDs: gm1-gm12
+        radius: 55,              // inner ring, closer to center
+        circleRadius: 14,        // smaller circles
+        strokeWidth: 1.5,
+        fontSize: 11,
+        triadsKey: 'minor'
+    }
+};
+
+// Ring order for iteration (outer to inner)
+export const RING_ORDER = ['major', 'minor'];
+
+// Triad data lookup by ring key
+export const TRIAD_DATA = {
+    major: MAJOR_TRIADS,
+    minor: MINOR_TRIADS
+};

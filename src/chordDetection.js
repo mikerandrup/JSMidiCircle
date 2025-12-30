@@ -1,8 +1,8 @@
 // Chord detection using tonal.js
 import { Chord } from 'tonal';
-import { NOTE_NAMES, NOTE_DISPLAY } from './constants.js';
+import { NOTE_NAMES, NOTE_DISPLAY, RING_ORDER } from './constants.js';
 import { state } from './state.js';
-import { circles, getChordElements } from './dom.js';
+import { rings, getChordElements } from './dom.js';
 
 // Convert note name to chromatic index (0-11)
 export function noteToIndex(noteName) {
@@ -25,9 +25,6 @@ export function formatNote(noteName) {
 // Select the best chord from detected options
 // Prefers simple triads (major/minor) over complex chords
 function selectBestChord(detected) {
-    // Priority: major triad, minor triad, then anything else
-    const dominated = ['major', 'minor', 'M', 'm', ''];
-
     for (const chordName of detected) {
         const info = Chord.get(chordName);
         if (info && info.type) {
@@ -46,6 +43,16 @@ function selectBestChord(detected) {
     return detected[0];
 }
 
+// Check if a chord type is minor
+function isMinorChord(chordType) {
+    if (!chordType) return false;
+    const lowerType = chordType.toLowerCase();
+    return lowerType === 'minor' ||
+           lowerType === 'm' ||
+           lowerType.startsWith('minor') ||
+           (lowerType.startsWith('m') && !lowerType.startsWith('maj'));
+}
+
 // Detect and display chord from active notes
 export function detectAndDisplayChord() {
     const chordElements = getChordElements();
@@ -58,12 +65,20 @@ export function detectAndDisplayChord() {
         }
     }
 
-    // Reset all circles to appropriate state
-    for (let i = 0; i < 12; i++) {
-        if (state.noteArray[i] !== 0) {
-            circles[i].setAttribute('class', 'partial');
-        } else {
-            circles[i].setAttribute('class', 'off');
+    // Reset all circles in ALL rings to appropriate state
+    for (const ringKey of RING_ORDER) {
+        const ringCircles = rings[ringKey]?.circles;
+        if (!ringCircles) continue;
+
+        for (let i = 0; i < 12; i++) {
+            const circle = ringCircles[i];
+            if (!circle) continue;
+
+            if (state.noteArray[i] !== 0) {
+                circle.setAttribute('class', 'partial');
+            } else {
+                circle.setAttribute('class', 'off');
+            }
         }
     }
 
@@ -82,22 +97,27 @@ export function detectAndDisplayChord() {
     if (activeNotes.length >= 3) {
         const detected = Chord.detect(activeNotes);
         if (detected.length > 0) {
-            // Prefer simple triads (major/minor) over complex chords (augmented/diminished)
+            // Prefer simple triads (major/minor) over complex chords
             const chordName = selectBestChord(detected);
             const chordInfo = Chord.get(chordName);
 
             if (chordInfo && chordInfo.tonic) {
-                // Highlight only the root note
                 const rootIndex = noteToIndex(chordInfo.tonic);
+                const chordType = chordInfo.type || '';
+
+                // Highlight root in the appropriate ring
                 if (state.noteArray[rootIndex] !== 0) {
-                    circles[rootIndex].setAttribute('class', 'on');
+                    const targetRing = isMinorChord(chordType) ? 'minor' : 'major';
+                    const targetCircle = rings[targetRing]?.circles[rootIndex];
+                    if (targetCircle) {
+                        targetCircle.setAttribute('class', 'on');
+                    }
                 }
 
                 // Display formatted chord name
                 if (chordElements.root && chordElements.quality) {
                     chordElements.root.textContent = formatNote(chordInfo.tonic);
-                    const quality = chordInfo.type || '';
-                    chordElements.quality.textContent = quality;
+                    chordElements.quality.textContent = chordType;
                 }
 
                 // Check for inversion (slash chord notation)

@@ -71,6 +71,38 @@ svg > g > circle {
     stroke-width: 4;
 }
 
+/* Inner ring (minor) specific styles */
+g[data-ring="minor"] > text {
+    font: bold 11px sans-serif;
+    cursor: default;
+    letter-spacing: -0.5px;
+}
+
+g[data-ring="minor"] > circle {
+    transition-property: fill-opacity;
+}
+
+/* Inner ring intensity (thinner strokes for smaller circles) */
+g[data-ring="minor"] > circle[data-n="0"] {
+    stroke-width: 1.5;
+}
+
+g[data-ring="minor"] > circle[data-n="1"] {
+    stroke-width: 1.75;
+}
+
+g[data-ring="minor"] > circle[data-n="2"] {
+    stroke-width: 2.25;
+}
+
+g[data-ring="minor"] > circle[data-n="3"] {
+    stroke-width: 2.75;
+}
+
+g[data-ring="minor"] > circle[data-n="4"] {
+    stroke-width: 3;
+}
+
 /* Controls (top right buttons) */
 #controls {
     position: absolute;
