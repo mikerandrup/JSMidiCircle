@@ -602,32 +602,32 @@
   };
   var MAJOR_TRIADS = {
     flats: [
-      "C major: C - E - G",
-      "D\u266D major: D\u266D - F - A\u266D",
-      "D major: D - F\u266F - A",
-      "E\u266D major: E\u266D - G - B\u266D",
-      "E major: E - G\u266F - B",
-      "F major: F - A - C",
-      "G\u266D major: G\u266D - B\u266D - D\u266D",
-      "G major: G - B - D",
-      "A\u266D major: A\u266D - C - E\u266D",
-      "A major: A - C\u266F - E",
-      "B\u266D major: B\u266D - D - F",
-      "B major: B - D\u266F - F\u266F"
+      { name: "C major", recipe: "C   E   G" },
+      { name: "D\u266D major", recipe: "D\u266D   F   A\u266D" },
+      { name: "D major", recipe: "D   F\u266F   A" },
+      { name: "E\u266D major", recipe: "E\u266D   G   B\u266D" },
+      { name: "E major", recipe: "E   G\u266F   B" },
+      { name: "F major", recipe: "F   A   C" },
+      { name: "G\u266D major", recipe: "G\u266D   B\u266D   D\u266D" },
+      { name: "G major", recipe: "G   B   D" },
+      { name: "A\u266D major", recipe: "A\u266D   C   E\u266D" },
+      { name: "A major", recipe: "A   C\u266F   E" },
+      { name: "B\u266D major", recipe: "B\u266D   D   F" },
+      { name: "B major", recipe: "B   D\u266F   F\u266F" }
     ],
     sharps: [
-      "C major: C - E - G",
-      "C\u266F major: C\u266F - E\u266F - G\u266F",
-      "D major: D - F\u266F - A",
-      "D\u266F major: D\u266F - F\u{1D12A} - A\u266F",
-      "E major: E - G\u266F - B",
-      "F major: F - A - C",
-      "F\u266F major: F\u266F - A\u266F - C\u266F",
-      "G major: G - B - D",
-      "G\u266F major: G\u266F - B\u266F - D\u266F",
-      "A major: A - C\u266F - E",
-      "A\u266F major: A\u266F - C\u{1D12A} - E\u266F",
-      "B major: B - D\u266F - F\u266F"
+      { name: "C major", recipe: "C   E   G" },
+      { name: "C\u266F major", recipe: "C\u266F   E\u266F   G\u266F" },
+      { name: "D major", recipe: "D   F\u266F   A" },
+      { name: "D\u266F major", recipe: "D\u266F   F\u{1D12A}   A\u266F" },
+      { name: "E major", recipe: "E   G\u266F   B" },
+      { name: "F major", recipe: "F   A   C" },
+      { name: "F\u266F major", recipe: "F\u266F   A\u266F   C\u266F" },
+      { name: "G major", recipe: "G   B   D" },
+      { name: "G\u266F major", recipe: "G\u266F   B\u266F   D\u266F" },
+      { name: "A major", recipe: "A   C\u266F   E" },
+      { name: "A\u266F major", recipe: "A\u266F   C\u{1D12A}   E\u266F" },
+      { name: "B major", recipe: "B   D\u266F   F\u266F" }
     ]
   };
 
@@ -654,10 +654,6 @@
       if (text) {
         text.textContent = noteNames[i];
       }
-      const title = group.querySelector("title");
-      if (title) {
-        title.textContent = triads3[i];
-      }
     }
   }
   function initAccidentals() {
@@ -670,6 +666,33 @@
         updateAccidentals();
       });
     }
+    initNoteTooltips();
+  }
+  function initNoteTooltips() {
+    const tooltip = document.getElementById("noteTooltip");
+    if (!tooltip) return;
+    for (let i = 0; i < 12; i++) {
+      const group = svgGroups[i];
+      if (!group) continue;
+      group.addEventListener("mouseenter", (e) => {
+        const mode = state.useFlats ? "flats" : "sharps";
+        const triad = MAJOR_TRIADS[mode][i];
+        tooltip.innerHTML = `<div class="recipe">${triad.recipe}</div><div class="name">${triad.name}</div>`;
+        tooltip.classList.add("visible");
+        positionTooltip(e, tooltip);
+      });
+      group.addEventListener("mousemove", (e) => {
+        positionTooltip(e, tooltip);
+      });
+      group.addEventListener("mouseleave", () => {
+        tooltip.classList.remove("visible");
+      });
+    }
+  }
+  function positionTooltip(e, tooltip) {
+    const offset = 15;
+    tooltip.style.left = e.pageX + offset + "px";
+    tooltip.style.top = e.pageY + offset + "px";
   }
 
   // src/midiHandler.js

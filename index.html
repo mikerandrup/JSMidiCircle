@@ -132,6 +132,34 @@ svg > g > circle {
     opacity: 1;
 }
 
+#noteTooltip {
+    display: none;
+    position: absolute;
+    padding: 0.6em 0.9em;
+    background: #222;
+    color: white;
+    font-family: sans-serif;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 100;
+    text-align: center;
+}
+
+#noteTooltip .recipe {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+#noteTooltip .name {
+    font-size: 14px;
+    color: #aaa;
+    margin-top: 0.2em;
+}
+
+#noteTooltip.visible {
+    display: block;
+}
+
 #credit {
     position: absolute;
     bottom: 0.5em;
@@ -155,76 +183,53 @@ svg > g > circle {
 <div>
  <svg viewBox="0 0 250 250">
   <g id="g1" transform="translate(125,25)">
-      <title>C major: C - E - G</title>
       <circle class="off" id="c1"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-      <text text-anchor="middle" alignment-baseline="central" >C</text>
+      <text text-anchor="middle" alignment-baseline="central">C</text>
   </g>
   <g id="g2" transform="translate(175,38.4)">
-      <title>D♭ major: D♭ - F - A♭</title>
       <circle class="off" id="c2"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">D♭</text>
   </g>
   <g id="g3" transform="translate(211.6,75)">
-      <title>D major: D - F♯ - A</title>
       <circle class="off" id="c3"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">D</text>
   </g>
-
-  <!-- spacer -->
-
   <g id="g4" transform="translate(225,125)">
-      <title>E♭ major: E♭ - G - B♭</title>
       <circle class="off" id="c4"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">E♭</text>
   </g>
   <g id="g5" transform="translate(211.6,175)">
-      <title>E major: E - G♯ - B</title>
       <circle class="off" id="c5"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">E</text>
   </g>
   <g id="g6" transform="translate(175,211.6)">
-      <title>F major: F - A - C</title>
       <circle class="off" id="c6"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">F</text>
   </g>
-
-  <!-- spacer -->
-
   <g id="g7" transform="translate(125,225)">
-      <title>G♭ major: G♭ - B♭ - D♭</title>
       <circle class="off" id="c7"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">G♭</text>
   </g>
   <g id="g8" transform="translate(75,211.6)">
-      <title>G major: G - B - D</title>
       <circle class="off" id="c8"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">G</text>
   </g>
   <g id="g9" transform="translate(38.4,175)">
-      <title>A♭ major: A♭ - C - E♭</title>
       <circle class="off" id="c9"  cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">A♭</text>
   </g>
-
-  <!-- spacer -->
-
   <g id="g10" transform="translate(25,125)">
-      <title>A major: A - C♯ - E</title>
       <circle class="off" id="c10" cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
-     <text text-anchor="middle" alignment-baseline="central">A</text>
+      <text text-anchor="middle" alignment-baseline="central">A</text>
   </g>
   <g id="g11" transform="translate(38.4,75)">
-      <title>B♭ major: B♭ - D - F</title>
       <circle class="off" id="c11" cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">B♭</text>
   </g>
   <g id="g12" transform="translate(75,38.4)">
-      <title>B major: B - D♯ - F♯</title>
       <circle class="off" id="c12" cx="0" cy="0" r="22" stroke="black" stroke-width="2" data-n="0"/>
       <text text-anchor="middle" alignment-baseline="central">B</text>
   </g>
-
-  <!-- spacer -->
 
   <circle id="centerCircle" cx="125" cy="125" r="60" fill="white"/>
   <text id="chordDisplay" text-anchor="middle" font-family="sans-serif">
@@ -241,6 +246,7 @@ svg > g > circle {
   </defs>
 </svg>
 <div id="midiStatus"></div>
+<div id="noteTooltip"></div>
 <div id="credit">Original by <a href="https://github.com/RasmusMathiesen/JSMidiCircle" target="_blank">RasmusMathiesen</a></div>
 
 <div id="controls">

@@ -9,33 +9,34 @@ export const NOTE_DISPLAY = {
 };
 
 // Major triads for tooltips (indexed by chromatic position)
+// Each entry has: name (chord name), recipe (notes to play)
 export const MAJOR_TRIADS = {
     flats: [
-        'C major: C - E - G',
-        'D♭ major: D♭ - F - A♭',
-        'D major: D - F♯ - A',
-        'E♭ major: E♭ - G - B♭',
-        'E major: E - G♯ - B',
-        'F major: F - A - C',
-        'G♭ major: G♭ - B♭ - D♭',
-        'G major: G - B - D',
-        'A♭ major: A♭ - C - E♭',
-        'A major: A - C♯ - E',
-        'B♭ major: B♭ - D - F',
-        'B major: B - D♯ - F♯'
+        { name: 'C major', recipe: 'C   E   G' },
+        { name: 'D♭ major', recipe: 'D♭   F   A♭' },
+        { name: 'D major', recipe: 'D   F♯   A' },
+        { name: 'E♭ major', recipe: 'E♭   G   B♭' },
+        { name: 'E major', recipe: 'E   G♯   B' },
+        { name: 'F major', recipe: 'F   A   C' },
+        { name: 'G♭ major', recipe: 'G♭   B♭   D♭' },
+        { name: 'G major', recipe: 'G   B   D' },
+        { name: 'A♭ major', recipe: 'A♭   C   E♭' },
+        { name: 'A major', recipe: 'A   C♯   E' },
+        { name: 'B♭ major', recipe: 'B♭   D   F' },
+        { name: 'B major', recipe: 'B   D♯   F♯' }
     ],
     sharps: [
-        'C major: C - E - G',
-        'C♯ major: C♯ - E♯ - G♯',
-        'D major: D - F♯ - A',
-        'D♯ major: D♯ - F𝄪 - A♯',
-        'E major: E - G♯ - B',
-        'F major: F - A - C',
-        'F♯ major: F♯ - A♯ - C♯',
-        'G major: G - B - D',
-        'G♯ major: G♯ - B♯ - D♯',
-        'A major: A - C♯ - E',
-        'A♯ major: A♯ - C𝄪 - E♯',
-        'B major: B - D♯ - F♯'
+        { name: 'C major', recipe: 'C   E   G' },
+        { name: 'C♯ major', recipe: 'C♯   E♯   G♯' },
+        { name: 'D major', recipe: 'D   F♯   A' },
+        { name: 'D♯ major', recipe: 'D♯   F𝄪   A♯' },
+        { name: 'E major', recipe: 'E   G♯   B' },
+        { name: 'F major', recipe: 'F   A   C' },
+        { name: 'F♯ major', recipe: 'F♯   A♯   C♯' },
+        { name: 'G major', recipe: 'G   B   D' },
+        { name: 'G♯ major', recipe: 'G♯   B♯   D♯' },
+        { name: 'A major', recipe: 'A   C♯   E' },
+        { name: 'A♯ major', recipe: 'A♯   C𝄪   E♯' },
+        { name: 'B major', recipe: 'B   D♯   F♯' }
     ]
 };

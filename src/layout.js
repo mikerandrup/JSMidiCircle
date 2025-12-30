@@ -34,12 +34,6 @@ export function updateAccidentals() {
         if (text) {
             text.textContent = noteNames[i];
         }
-
-        // Update tooltip (title element)
-        const title = group.querySelector('title');
-        if (title) {
-            title.textContent = triads[i];
-        }
     }
 }
 
@@ -57,4 +51,41 @@ export function initAccidentals() {
             updateAccidentals();
         });
     }
+
+    // Set up note hover tooltips
+    initNoteTooltips();
+}
+
+// Initialize hover tooltips for note circles
+function initNoteTooltips() {
+    const tooltip = document.getElementById('noteTooltip');
+    if (!tooltip) return;
+
+    for (let i = 0; i < 12; i++) {
+        const group = svgGroups[i];
+        if (!group) continue;
+
+        group.addEventListener('mouseenter', (e) => {
+            const mode = state.useFlats ? 'flats' : 'sharps';
+            const triad = MAJOR_TRIADS[mode][i];
+            tooltip.innerHTML = `<div class="recipe">${triad.recipe}</div><div class="name">${triad.name}</div>`;
+            tooltip.classList.add('visible');
+            positionTooltip(e, tooltip);
+        });
+
+        group.addEventListener('mousemove', (e) => {
+            positionTooltip(e, tooltip);
+        });
+
+        group.addEventListener('mouseleave', () => {
+            tooltip.classList.remove('visible');
+        });
+    }
+}
+
+// Position tooltip near cursor
+function positionTooltip(e, tooltip) {
+    const offset = 15;
+    tooltip.style.left = (e.pageX + offset) + 'px';
+    tooltip.style.top = (e.pageY + offset) + 'px';
 }
