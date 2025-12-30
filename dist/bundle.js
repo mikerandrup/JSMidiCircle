@@ -2506,12 +2506,16 @@
   function stopNote(midiNote) {
     if (!activeOscillators.has(midiNote)) return;
     const { osc, gain } = activeOscillators.get(midiNote);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+    const now = audioCtx.currentTime;
+    const releaseTime = 0.08;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.exponentialRampToValueAtTime(1e-3, now + releaseTime);
     setTimeout(() => {
       osc.stop();
       osc.disconnect();
       gain.disconnect();
-    }, 60);
+    }, releaseTime * 1e3 + 10);
     activeOscillators.delete(midiNote);
   }
   function stopAllNotes() {
