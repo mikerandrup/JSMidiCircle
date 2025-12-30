@@ -4,10 +4,12 @@ import { state } from './state.js';
 import { circles } from './dom.js';
 import { showStatus } from './status.js';
 import { detectAndDisplayChord } from './chordDetection.js';
+import { playNote, stopNote } from './audio.js';
 
 // Update note state on noteon/noteoff
 function updateNote(noteState, e) {
     const note = e.note.number % 12;
+    const midiNote = e.note.number;  // Full MIDI note for audio
 
     if (noteState === 'on') {
         state.noteArray[note]++;
@@ -16,12 +18,14 @@ function updateNote(noteState, e) {
         if (state.noteArray[note] === 1) {
             circles[note].setAttribute('class', 'partial');
         }
+        playNote(midiNote);
     } else {
         state.noteArray[note]--;
         if (state.noteArray[note] === 0) {
             circles[note].setAttribute('class', 'off');
         }
         circles[note].setAttribute('data-n', state.noteArray[note]);
+        stopNote(midiNote);
     }
 
     // Debounced chord detection

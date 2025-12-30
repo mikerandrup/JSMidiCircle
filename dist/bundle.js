@@ -48,8 +48,8 @@
             return !(!this.interface || !this.interface.sysexEnabled);
           }.bind(this) }, nrpnEventsEnabled: { enumerable: true, get: function() {
             return !!this._nrpnEventsEnabled;
-          }.bind(this), set: function(enabled) {
-            return this._nrpnEventsEnabled = enabled, this._nrpnEventsEnabled;
+          }.bind(this), set: function(enabled2) {
+            return this._nrpnEventsEnabled = enabled2, this._nrpnEventsEnabled;
           } }, nrpnTypes: { enumerable: true, get: function() {
             return this._nrpnTypes;
           }.bind(this) }, time: { enumerable: true, get: function() {
@@ -572,7 +572,9 @@
   var state = {
     noteArray: new Array(12).fill(0),
     chordTimeout: null,
-    useCircleOfFifths: true
+    useCircleOfFifths: true,
+    useFlats: false
+    // true = flats (D♭), false = sharps (C♯)
   };
 
   // src/geometry.js
@@ -592,6 +594,46 @@
     }
   }
 
+  // src/constants.js
+  var NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+  var NOTE_DISPLAY = {
+    flats: ["C", "D\u266D", "D", "E\u266D", "E", "F", "G\u266D", "G", "A\u266D", "A", "B\u266D", "B"],
+    sharps: ["C", "C\u266F", "D", "D\u266F", "E", "F", "F\u266F", "G", "G\u266F", "A", "A\u266F", "B"]
+  };
+  var MAJOR_TRIADS = {
+    flats: [
+      { name: "C major", recipe: "C   E   G" },
+      { name: "Db major", recipe: "Db   F   Ab" },
+      { name: "D major", recipe: "D   F#   A" },
+      { name: "Eb major", recipe: "Eb   G   Bb" },
+      { name: "E major", recipe: "E   G#   B" },
+      { name: "F major", recipe: "F   A   C" },
+      { name: "Gb major", recipe: "Gb   Bb   Db" },
+      { name: "G major", recipe: "G   B   D" },
+      { name: "Ab major", recipe: "Ab   C   Eb" },
+      { name: "A major", recipe: "A   C#   E" },
+      { name: "Bb major", recipe: "Bb   D   F" },
+      { name: "B major", recipe: "B   D#   F#" }
+    ],
+    sharps: [
+      { name: "C major", recipe: "C   E   G" },
+      { name: "C# major", recipe: "C#   F   G#" },
+      { name: "D major", recipe: "D   F#   A" },
+      { name: "D# major", recipe: "D#   G   A#" },
+      { name: "E major", recipe: "E   G#   B" },
+      { name: "F major", recipe: "F   A   C" },
+      { name: "F# major", recipe: "F#   A#   C#" },
+      { name: "G major", recipe: "G   B   D" },
+      { name: "G# major", recipe: "G#   C   D#" },
+      { name: "A major", recipe: "A   C#   E" },
+      { name: "A# major", recipe: "A#   D   F" },
+      { name: "B major", recipe: "B   D#   F#" }
+    ]
+  };
+  function formatForDisplay(text) {
+    return text.replace(/#/g, "\u266F").replace(/b/g, "\u266D");
+  }
+
   // src/layout.js
   function initLayout() {
     arrangeCircles(state.useCircleOfFifths);
@@ -600,26 +642,62 @@
       layoutButton.addEventListener("click", () => {
         state.useCircleOfFifths = !state.useCircleOfFifths;
         arrangeCircles(state.useCircleOfFifths);
-        layoutButton.textContent = state.useCircleOfFifths ? "Circle of Fifths \u2753" : "Chromatic \u2753";
+        layoutButton.textContent = state.useCircleOfFifths ? "Circle of Fifths" : "Chromatic";
       });
     }
   }
-  function switchText(element) {
-    const swaps = {
-      "B\u266D": "A\u266F",
-      "A\u266F": "B\u266D",
-      "A\u266D": "G\u266F",
-      "G\u266F": "A\u266D",
-      "G\u266D": "F\u266F",
-      "F\u266F": "G\u266D",
-      "E\u266D": "D\u266F",
-      "D\u266F": "E\u266D",
-      "D\u266D": "C\u266F",
-      "C\u266F": "D\u266D"
-    };
-    if (swaps[element.textContent]) {
-      element.textContent = swaps[element.textContent];
+  function updateAccidentals() {
+    const mode = state.useFlats ? "flats" : "sharps";
+    const noteNames = NOTE_DISPLAY[mode];
+    const triads3 = MAJOR_TRIADS[mode];
+    for (let i = 0; i < 12; i++) {
+      const group = svgGroups[i];
+      if (!group) continue;
+      const text = group.querySelector("text");
+      if (text) {
+        text.textContent = noteNames[i];
+      }
     }
+  }
+  function initAccidentals() {
+    updateAccidentals();
+    const accidentalsButton = document.getElementById("accidentalsToggle");
+    if (accidentalsButton) {
+      accidentalsButton.addEventListener("click", () => {
+        state.useFlats = !state.useFlats;
+        accidentalsButton.textContent = state.useFlats ? "\u266D Flats" : "\u266F Sharps";
+        updateAccidentals();
+      });
+    }
+    initNoteTooltips();
+  }
+  function initNoteTooltips() {
+    const tooltip = document.getElementById("noteTooltip");
+    if (!tooltip) return;
+    for (let i = 0; i < 12; i++) {
+      const group = svgGroups[i];
+      if (!group) continue;
+      group.addEventListener("mouseenter", (e) => {
+        const mode = state.useFlats ? "flats" : "sharps";
+        const triad = MAJOR_TRIADS[mode][i];
+        const recipe = formatForDisplay(triad.recipe);
+        const name2 = formatForDisplay(triad.name);
+        tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name2}</div>`;
+        tooltip.classList.add("visible");
+        positionTooltip(e, tooltip);
+      });
+      group.addEventListener("mousemove", (e) => {
+        positionTooltip(e, tooltip);
+      });
+      group.addEventListener("mouseleave", () => {
+        tooltip.classList.remove("visible");
+      });
+    }
+  }
+  function positionTooltip(e, tooltip) {
+    const offset = 15;
+    tooltip.style.left = e.pageX + offset + "px";
+    tooltip.style.top = e.pageY + offset + "px";
   }
 
   // src/midiHandler.js
@@ -2123,9 +2201,6 @@
   }
   var isNamed = deprecate("isNamed", "isNamedPitch", isNamedPitch);
 
-  // src/constants.js
-  var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
   // src/chordDetection.js
   function noteToIndex(noteName) {
     const base = noteName.charAt(0).toUpperCase();
@@ -2136,8 +2211,25 @@
     if (accidental.includes("b")) offset = -(accidental.split("b").length - 1);
     return (baseIndex + offset + 12) % 12;
   }
-  function formatRoot(root) {
-    return root.replace(/#/g, " sharp").replace(/b/g, " flat");
+  function formatNote(noteName) {
+    const index4 = noteToIndex(noteName);
+    const mode = state.useFlats ? "flats" : "sharps";
+    return NOTE_DISPLAY[mode][index4];
+  }
+  function selectBestChord(detected) {
+    const dominated = ["major", "minor", "M", "m", ""];
+    for (const chordName of detected) {
+      const info = dist_exports.get(chordName);
+      if (info && info.type) {
+        if (info.type === "major" || info.type === "minor") {
+          return chordName;
+        }
+      }
+      if (info && info.type === "") {
+        return chordName;
+      }
+    }
+    return detected[0];
   }
   function detectAndDisplayChord() {
     const chordElements = getChordElements();
@@ -2165,7 +2257,7 @@
     if (activeNotes.length >= 3) {
       const detected = dist_exports.detect(activeNotes);
       if (detected.length > 0) {
-        const chordName = detected[0];
+        const chordName = selectBestChord(detected);
         const chordInfo = dist_exports.get(chordName);
         if (chordInfo && chordInfo.tonic) {
           const rootIndex = noteToIndex(chordInfo.tonic);
@@ -2173,7 +2265,7 @@
             circles[rootIndex].setAttribute("class", "on");
           }
           if (chordElements.root && chordElements.quality) {
-            chordElements.root.textContent = formatRoot(chordInfo.tonic);
+            chordElements.root.textContent = formatNote(chordInfo.tonic);
             const quality = chordInfo.type || "";
             chordElements.quality.textContent = quality;
           }
@@ -2190,7 +2282,7 @@
             } else if (interval2 === 10 || interval2 === 11) {
               inversionText = "3rd inversion (7th in bass)";
             } else {
-              inversionText = formatRoot(bassNote) + " in bass";
+              inversionText = formatNote(bassNote) + " in bass";
             }
             chordElements.inversion.textContent = inversionText;
           }
@@ -2199,21 +2291,87 @@
     }
   }
 
+  // src/audio.js
+  var audioCtx = null;
+  var enabled = false;
+  var activeOscillators = /* @__PURE__ */ new Map();
+  function midiToFrequency(midiNote) {
+    return 440 * Math.pow(2, (midiNote - 69) / 12);
+  }
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+  }
+  function playNote(midiNote) {
+    if (!enabled || !audioCtx) return;
+    if (activeOscillators.has(midiNote)) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = midiToFrequency(midiNote);
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    activeOscillators.set(midiNote, { osc, gain });
+  }
+  function stopNote(midiNote) {
+    if (!activeOscillators.has(midiNote)) return;
+    const { osc, gain } = activeOscillators.get(midiNote);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+    setTimeout(() => {
+      osc.stop();
+      osc.disconnect();
+      gain.disconnect();
+    }, 60);
+    activeOscillators.delete(midiNote);
+  }
+  function stopAllNotes() {
+    for (const midiNote of activeOscillators.keys()) {
+      stopNote(midiNote);
+    }
+  }
+  function setEnabled(value) {
+    enabled = value;
+    if (enabled) {
+      ensureAudioContext();
+    } else {
+      stopAllNotes();
+    }
+  }
+  function initAudio() {
+    const button = document.getElementById("soundToggle");
+    if (button) {
+      button.addEventListener("click", () => {
+        setEnabled(!enabled);
+        button.textContent = enabled ? "\u{1F50A} Sound" : "\u{1F507} Sound";
+      });
+    }
+  }
+
   // src/midiHandler.js
   function updateNote(noteState, e) {
     const note2 = e.note.number % 12;
+    const midiNote = e.note.number;
     if (noteState === "on") {
       state.noteArray[note2]++;
       circles[note2].setAttribute("data-n", state.noteArray[note2]);
       if (state.noteArray[note2] === 1) {
         circles[note2].setAttribute("class", "partial");
       }
+      playNote(midiNote);
     } else {
       state.noteArray[note2]--;
       if (state.noteArray[note2] === 0) {
         circles[note2].setAttribute("class", "off");
       }
       circles[note2].setAttribute("data-n", state.noteArray[note2]);
+      stopNote(midiNote);
     }
     clearTimeout(state.chordTimeout);
     state.chordTimeout = setTimeout(detectAndDisplayChord, 40);
@@ -2242,9 +2400,77 @@
     });
   }
 
+  // src/chordTest.js
+  function parseRecipe(recipe) {
+    return recipe.split(/\s+/).filter((n) => n.length > 0);
+  }
+  function areEnharmonic(a, b) {
+    const enharmonics = {
+      "C#": "Db",
+      "Db": "C#",
+      "D#": "Eb",
+      "Eb": "D#",
+      "F#": "Gb",
+      "Gb": "F#",
+      "G#": "Ab",
+      "Ab": "G#",
+      "A#": "Bb",
+      "Bb": "A#"
+    };
+    return enharmonics[a] === b || enharmonics[b] === a;
+  }
+  function testChord(name2, recipe) {
+    const notes2 = parseRecipe(recipe);
+    const detected = dist_exports.detect(notes2);
+    const expectedRoot = name2.split(" ")[0];
+    for (const chordName of detected) {
+      const info = dist_exports.get(chordName);
+      if (info && info.tonic) {
+        const isMajor = info.type === "major" || info.type === "";
+        if (isMajor) {
+          if (info.tonic === expectedRoot || areEnharmonic(info.tonic, expectedRoot)) {
+            return { pass: true, detected: chordName, info };
+          }
+        }
+      }
+    }
+    return { pass: false, detected: detected.slice(0, 3) };
+  }
+  function runChordTests() {
+    console.group("\u{1F3B9} Chord Formula Verification");
+    let failures = 0;
+    for (const mode of ["sharps", "flats"]) {
+      console.group(`${mode.toUpperCase()} mode`);
+      const labels = NOTE_DISPLAY[mode];
+      for (let i = 0; i < MAJOR_TRIADS[mode].length; i++) {
+        const triad = MAJOR_TRIADS[mode][i];
+        const label = labels[i];
+        const notes2 = parseRecipe(triad.recipe);
+        const displayNotes = notes2.map((n) => formatForDisplay(n));
+        const result = testChord(triad.name, triad.recipe);
+        if (result.pass) {
+          const detectedName = formatForDisplay(result.info.tonic) + " " + (result.info.type || "major");
+          console.log(`\u2713 (${label}) - [${displayNotes.join(", ")}] -> ${detectedName}`);
+        } else {
+          failures++;
+          console.error(`\u2717 (${label}) - [${displayNotes.join(", ")}] -> detected as: ${result.detected.join(", ")}`);
+        }
+      }
+      console.groupEnd();
+    }
+    if (failures === 0) {
+      console.log("%c All chord formulas verified! \u2713", "color: green; font-weight: bold");
+    } else {
+      console.error(`%c ${failures} chord formula(s) failed verification`, "color: red; font-weight: bold");
+    }
+    console.groupEnd();
+  }
+
   // src/main.js
+  runChordTests();
   initDom();
   initLayout();
-  window.switchText = switchText;
+  initAccidentals();
   initMidi();
+  initAudio();
 })();

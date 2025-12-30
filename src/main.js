@@ -2,8 +2,13 @@
 // WebMIDI Circle of Fifths visualizer with chord detection
 
 import { initDom } from './dom.js';
-import { initLayout, switchText } from './layout.js';
+import { initLayout, initAccidentals } from './layout.js';
 import { initMidi } from './midiHandler.js';
+import { initAudio } from './audio.js';
+import { runChordTests } from './chordTest.js';
+
+// Verify chord formulas on startup (check browser console)
+runChordTests();
 
 // Initialize DOM elements
 initDom();
@@ -11,8 +16,11 @@ initDom();
 // Initialize layout (Circle of Fifths toggle)
 initLayout();
 
-// Expose switchText globally for onclick handlers in HTML
-window.switchText = switchText;
+// Initialize accidentals toggle (sharp/flat preference)
+initAccidentals();
 
 // Initialize MIDI
 initMidi();
+
+// Initialize audio toggle
+initAudio();
