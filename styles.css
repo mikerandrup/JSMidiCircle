@@ -26,9 +26,20 @@ svg > g > circle {
 }
 
 /* Note states */
-.on { fill: url("#NoteOnGradient"); }
+.on {
+    fill: url("#NoteOnGradient");
+    animation: vibrate 0.08s linear infinite;
+}
 .partial { fill: #ddd; }
 .off { fill: white; }
+
+/* Subtle vibration for active chord root */
+@keyframes vibrate {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(0.5px, -0.5px); }
+    50% { transform: translate(-0.5px, 0.5px); }
+    75% { transform: translate(0.5px, 0.5px); }
+}
 
 .cover {
     fill-opacity: 0;
