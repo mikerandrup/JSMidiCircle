@@ -571,7 +571,6 @@
   // src/state.js
   var state = {
     noteArray: new Array(12).fill(0),
-    sustainPedal: false,
     chordTimeout: null,
     useCircleOfFifths: true
   };
@@ -2205,7 +2204,6 @@
     const note2 = e.note.number % 12;
     if (noteState === "on") {
       state.noteArray[note2]++;
-      if (state.noteArray[note2] === 0) state.noteArray[note2] = 1;
       circles[note2].setAttribute("data-n", state.noteArray[note2]);
       if (state.noteArray[note2] === 1) {
         circles[note2].setAttribute("class", "partial");
@@ -2213,11 +2211,7 @@
     } else {
       state.noteArray[note2]--;
       if (state.noteArray[note2] === 0) {
-        if (state.sustainPedal) {
-          state.noteArray[note2] = -1;
-        } else {
-          circles[note2].setAttribute("class", "off");
-        }
+        circles[note2].setAttribute("class", "off");
       }
       circles[note2].setAttribute("data-n", state.noteArray[note2]);
     }
@@ -2244,24 +2238,6 @@
       const input = import_webmidi.default.inputs[0];
       input.addListener("noteon", "all", (e) => updateNote("on", e));
       input.addListener("noteoff", "all", (e) => updateNote("off", e));
-      input.addListener("controlchange", "all", (e) => {
-        if (e.controller.number === 64) {
-          if (e.value > 63) {
-            state.sustainPedal = true;
-          } else {
-            state.sustainPedal = false;
-            if (e.value === 0) {
-              state.noteArray.forEach((value, index4) => {
-                if (value === -1) {
-                  state.noteArray[index4] = 0;
-                  circles[index4].setAttribute("data-n", 0);
-                }
-              });
-              detectAndDisplayChord();
-            }
-          }
-        }
-      });
       showStatus("Connected: " + (input.name || "MIDI Device"));
     });
   }
