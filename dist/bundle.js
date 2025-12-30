@@ -656,20 +656,19 @@
     const group = document.createElementNS(SVG_NS, "g");
     group.setAttribute("id", groupId);
     group.setAttribute("data-ring", ringKey);
-    group.setAttribute("data-chrom", chromIndex);
+    group.setAttribute("data-chrom", String(chromIndex));
     const circle = document.createElementNS(SVG_NS, "circle");
     circle.setAttribute("class", "off");
     circle.setAttribute("id", circleId);
     circle.setAttribute("cx", "0");
     circle.setAttribute("cy", "0");
-    circle.setAttribute("r", config.circleRadius);
+    circle.setAttribute("r", String(config.circleRadius));
     circle.setAttribute("stroke", "black");
-    circle.setAttribute("stroke-width", config.strokeWidth);
+    circle.setAttribute("stroke-width", String(config.strokeWidth));
     circle.setAttribute("data-n", "0");
     const text = document.createElementNS(SVG_NS, "text");
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("alignment-baseline", "central");
-    text.setAttribute("font-size", config.fontSize);
     text.textContent = "";
     group.appendChild(circle);
     group.appendChild(text);
@@ -677,10 +676,16 @@
   }
   function generateRing(ringKey, svgElement) {
     const centerCircle = svgElement.querySelector("#centerCircle");
+    if (!centerCircle) {
+      console.error("[JSMidiCircle] centerCircle not found in SVG");
+      return;
+    }
+    console.log(`[JSMidiCircle] Generating ${ringKey} ring...`);
     for (let i = 0; i < 12; i++) {
       const group = createNoteGroup(ringKey, i);
       svgElement.insertBefore(group, centerCircle);
     }
+    console.log(`[JSMidiCircle] ${ringKey} ring generated`);
   }
 
   // src/dom.js
@@ -689,6 +694,10 @@
   var svgGroups = [];
   function initDom() {
     const svg = document.querySelector("svg");
+    if (!svg) {
+      console.error("[JSMidiCircle] SVG element not found");
+      return;
+    }
     for (const ringKey of RING_ORDER) {
       const config = RING_CONFIG[ringKey];
       rings[ringKey] = { circles: [], groups: [] };
@@ -701,6 +710,10 @@
       for (let i = 1; i <= 12; i++) {
         const circle = document.getElementById(`${config.idPrefix}${i}`);
         const group = document.getElementById(`${config.groupPrefix}${i}`);
+        if (group) {
+          group.setAttribute("data-ring", ringKey);
+          group.setAttribute("data-chrom", String(i - 1));
+        }
         rings[ringKey].circles.push(circle);
         rings[ringKey].groups.push(group);
       }
@@ -716,6 +729,9 @@
     }
     rings.major.circles.forEach((c) => circles.push(c));
     rings.major.groups.forEach((g) => svgGroups.push(g));
+    const majorCount = rings.major.circles.filter((c) => c !== null).length;
+    const minorCount = rings.minor.circles.filter((c) => c !== null).length;
+    console.log(`[JSMidiCircle] DOM initialized: ${majorCount} major, ${minorCount} minor circles`);
   }
   var _chordElements = null;
   function getChordElements() {

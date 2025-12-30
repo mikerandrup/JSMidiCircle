@@ -12,6 +12,10 @@ export const svgGroups = [];
 // Initialize DOM element references for all rings
 export function initDom() {
     const svg = document.querySelector('svg');
+    if (!svg) {
+        console.error('[JSMidiCircle] SVG element not found');
+        return;
+    }
 
     for (const ringKey of RING_ORDER) {
         const config = RING_CONFIG[ringKey];
@@ -29,11 +33,18 @@ export function initDom() {
         for (let i = 1; i <= 12; i++) {
             const circle = document.getElementById(`${config.idPrefix}${i}`);
             const group = document.getElementById(`${config.groupPrefix}${i}`);
+
+            if (group) {
+                // Add data-ring attribute for consistent CSS targeting
+                group.setAttribute('data-ring', ringKey);
+                group.setAttribute('data-chrom', String(i - 1));
+            }
+
             rings[ringKey].circles.push(circle);
             rings[ringKey].groups.push(group);
         }
 
-        // Add cover circles for animation effect
+        // Add cover circles for animation effect (only if circle exists)
         const coverRadius = config.circleRadius - 1;
         rings[ringKey].circles.forEach(circle => {
             if (circle) {
@@ -46,6 +57,11 @@ export function initDom() {
     // Populate legacy arrays for backward compatibility
     rings.major.circles.forEach(c => circles.push(c));
     rings.major.groups.forEach(g => svgGroups.push(g));
+
+    // Log initialization status
+    const majorCount = rings.major.circles.filter(c => c !== null).length;
+    const minorCount = rings.minor.circles.filter(c => c !== null).length;
+    console.log(`[JSMidiCircle] DOM initialized: ${majorCount} major, ${minorCount} minor circles`);
 }
 
 // Chord display elements (cached on first access)

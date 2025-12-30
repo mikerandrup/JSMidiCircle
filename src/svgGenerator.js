@@ -12,22 +12,22 @@ export function createNoteGroup(ringKey, chromIndex) {
     const group = document.createElementNS(SVG_NS, 'g');
     group.setAttribute('id', groupId);
     group.setAttribute('data-ring', ringKey);
-    group.setAttribute('data-chrom', chromIndex);
+    group.setAttribute('data-chrom', String(chromIndex));
 
     const circle = document.createElementNS(SVG_NS, 'circle');
     circle.setAttribute('class', 'off');
     circle.setAttribute('id', circleId);
     circle.setAttribute('cx', '0');
     circle.setAttribute('cy', '0');
-    circle.setAttribute('r', config.circleRadius);
+    circle.setAttribute('r', String(config.circleRadius));
     circle.setAttribute('stroke', 'black');
-    circle.setAttribute('stroke-width', config.strokeWidth);
+    circle.setAttribute('stroke-width', String(config.strokeWidth));
     circle.setAttribute('data-n', '0');
 
     const text = document.createElementNS(SVG_NS, 'text');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('alignment-baseline', 'central');
-    text.setAttribute('font-size', config.fontSize);
+    // Don't set font-size as attribute - let CSS handle it
     text.textContent = '';  // Will be set by updateAccidentals
 
     group.appendChild(circle);
@@ -39,9 +39,17 @@ export function createNoteGroup(ringKey, chromIndex) {
 // Generate all groups for a ring and insert before center circle
 export function generateRing(ringKey, svgElement) {
     const centerCircle = svgElement.querySelector('#centerCircle');
+    if (!centerCircle) {
+        console.error('[JSMidiCircle] centerCircle not found in SVG');
+        return;
+    }
+
+    console.log(`[JSMidiCircle] Generating ${ringKey} ring...`);
 
     for (let i = 0; i < 12; i++) {
         const group = createNoteGroup(ringKey, i);
         svgElement.insertBefore(group, centerCircle);
     }
+
+    console.log(`[JSMidiCircle] ${ringKey} ring generated`);
 }
