@@ -544,8 +544,101 @@
     }
   });
 
-  // src/main.js
+  // src/dom.js
+  var circles = [];
+  var svgGroups = [];
+  function initDom() {
+    for (let i = 1; i < 13; i++) {
+      circles.push(document.getElementById("c" + i));
+      svgGroups.push(document.getElementById("g" + i));
+    }
+    circles.forEach((circle) => {
+      circle.insertAdjacentHTML("afterend", '<circle cx="0" cy="0" r="21" class="cover"/>');
+    });
+  }
+  var _chordElements = null;
+  function getChordElements() {
+    if (!_chordElements) {
+      _chordElements = {
+        root: document.getElementById("chordRoot"),
+        quality: document.getElementById("chordQuality"),
+        inversion: document.getElementById("chordInversion")
+      };
+    }
+    return _chordElements;
+  }
+
+  // src/state.js
+  var state = {
+    noteArray: new Array(12).fill(0),
+    sustainPedal: false,
+    chordTimeout: null,
+    useCircleOfFifths: true
+  };
+
+  // src/geometry.js
+  function chromToCOF(index4) {
+    return index4 * 7 % 12;
+  }
+  function indexToCoordinates(index4) {
+    const angle = (index4 - 3) * (2 * Math.PI / 12);
+    const x = Math.cos(angle) * 100 + 125;
+    const y = Math.sin(angle) * 100 + 125;
+    return [x, y];
+  }
+  function arrangeCircles(useCoF) {
+    for (let i = 0; i < 12; i++) {
+      const xy = useCoF ? indexToCoordinates(chromToCOF(i)) : indexToCoordinates(i);
+      svgGroups[i].setAttribute("transform", `translate(${xy[0].toFixed(3)},${xy[1].toFixed(3)})`);
+    }
+  }
+
+  // src/layout.js
+  function initLayout() {
+    arrangeCircles(state.useCircleOfFifths);
+    const layoutButton = document.getElementById("layoutToggle");
+    if (layoutButton) {
+      layoutButton.addEventListener("click", () => {
+        state.useCircleOfFifths = !state.useCircleOfFifths;
+        arrangeCircles(state.useCircleOfFifths);
+        layoutButton.textContent = state.useCircleOfFifths ? "Circle of Fifths \u2753" : "Chromatic \u2753";
+      });
+    }
+  }
+  function switchText(element) {
+    const swaps = {
+      "B\u266D": "A\u266F",
+      "A\u266F": "B\u266D",
+      "A\u266D": "G\u266F",
+      "G\u266F": "A\u266D",
+      "G\u266D": "F\u266F",
+      "F\u266F": "G\u266D",
+      "E\u266D": "D\u266F",
+      "D\u266F": "E\u266D",
+      "D\u266D": "C\u266F",
+      "C\u266F": "D\u266D"
+    };
+    if (swaps[element.textContent]) {
+      element.textContent = swaps[element.textContent];
+    }
+  }
+
+  // src/midiHandler.js
   var import_webmidi = __toESM(require_webmidi_min());
+
+  // src/status.js
+  function showStatus(message, isError = false) {
+    const midiStatus = document.getElementById("midiStatus");
+    if (midiStatus) {
+      midiStatus.innerHTML = message;
+      midiStatus.style.background = isError ? "#660000" : "black";
+    }
+    if (isError) {
+      console.error("[JSMidiCircle]", message);
+    } else {
+      console.log("[JSMidiCircle]", message);
+    }
+  }
 
   // node_modules/@tonaljs/pitch/dist/index.mjs
   function isNamedPitch(src) {
@@ -2031,70 +2124,105 @@
   }
   var isNamed = deprecate("isNamed", "isNamedPitch", isNamedPitch);
 
-  // src/main.js
+  // src/constants.js
   var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  var circles = [];
-  var svgGroups = [];
-  for (let i = 1; i < 13; i++) {
-    circles.push(document.getElementById("c" + i));
-    svgGroups.push(document.getElementById("g" + i));
+
+  // src/chordDetection.js
+  function noteToIndex(noteName) {
+    const base = noteName.charAt(0).toUpperCase();
+    const accidental = noteName.slice(1);
+    const baseIndex = { "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11 }[base];
+    let offset = 0;
+    if (accidental.includes("#")) offset = accidental.split("#").length - 1;
+    if (accidental.includes("b")) offset = -(accidental.split("b").length - 1);
+    return (baseIndex + offset + 12) % 12;
   }
-  circles.forEach((circle) => {
-    circle.insertAdjacentHTML("afterend", '<circle cx="0" cy="0" r="21" class="cover"/>');
-  });
-  function chromToCOF(index4) {
-    return index4 * 7 % 12;
+  function formatRoot(root) {
+    return root.replace(/#/g, " sharp").replace(/b/g, " flat");
   }
-  function indexToCoordinates(index4) {
-    const angle = (index4 - 3) * (2 * Math.PI / 12);
-    const x = Math.cos(angle) * 100 + 125;
-    const y = Math.sin(angle) * 100 + 125;
-    return [x, y];
-  }
-  function arrangeCircles(useCoF) {
+  function detectAndDisplayChord() {
+    const chordElements = getChordElements();
+    const activeNotes = [];
     for (let i = 0; i < 12; i++) {
-      const xy = useCoF ? indexToCoordinates(chromToCOF(i)) : indexToCoordinates(i);
-      svgGroups[i].setAttribute("transform", `translate(${xy[0].toFixed(3)},${xy[1].toFixed(3)})`);
+      if (state.noteArray[i] !== 0) {
+        activeNotes.push(NOTE_NAMES[i]);
+      }
+    }
+    for (let i = 0; i < 12; i++) {
+      if (state.noteArray[i] !== 0) {
+        circles[i].setAttribute("class", "partial");
+      } else {
+        circles[i].setAttribute("class", "off");
+      }
+    }
+    if (chordElements.root) chordElements.root.textContent = "";
+    if (chordElements.quality) chordElements.quality.textContent = "";
+    if (chordElements.inversion) chordElements.inversion.textContent = "";
+    if (activeNotes.length > 0 && activeNotes.length < 3) {
+      if (chordElements.quality) {
+        chordElements.quality.textContent = "(add more notes)";
+      }
+    }
+    if (activeNotes.length >= 3) {
+      const detected = dist_exports.detect(activeNotes);
+      if (detected.length > 0) {
+        const chordName = detected[0];
+        const chordInfo = dist_exports.get(chordName);
+        if (chordInfo && chordInfo.tonic) {
+          const rootIndex = noteToIndex(chordInfo.tonic);
+          if (state.noteArray[rootIndex] !== 0) {
+            circles[rootIndex].setAttribute("class", "on");
+          }
+          if (chordElements.root && chordElements.quality) {
+            chordElements.root.textContent = formatRoot(chordInfo.tonic);
+            const quality = chordInfo.type || "";
+            chordElements.quality.textContent = quality;
+          }
+          if (chordElements.inversion && chordName.includes("/")) {
+            const bassNote = chordName.split("/")[1];
+            const bassIndex = noteToIndex(bassNote);
+            const rootIdx = noteToIndex(chordInfo.tonic);
+            const interval2 = (bassIndex - rootIdx + 12) % 12;
+            let inversionText = "";
+            if (interval2 === 3 || interval2 === 4) {
+              inversionText = "1st inversion (3rd in bass)";
+            } else if (interval2 === 7) {
+              inversionText = "2nd inversion (5th in bass)";
+            } else if (interval2 === 10 || interval2 === 11) {
+              inversionText = "3rd inversion (7th in bass)";
+            } else {
+              inversionText = formatRoot(bassNote) + " in bass";
+            }
+            chordElements.inversion.textContent = inversionText;
+          }
+        }
+      }
     }
   }
-  var useCircleOfFifths = true;
-  arrangeCircles(useCircleOfFifths);
-  var layoutButton = document.getElementById("layoutToggle");
-  if (layoutButton) {
-    layoutButton.addEventListener("click", () => {
-      useCircleOfFifths = !useCircleOfFifths;
-      arrangeCircles(useCircleOfFifths);
-      layoutButton.textContent = useCircleOfFifths ? "Circle of Fifths \u2753" : "Chromatic \u2753";
-    });
-  }
-  window.switchText = function(element) {
-    const swaps = {
-      "B\u266D": "A\u266F",
-      "A\u266F": "B\u266D",
-      "A\u266D": "G\u266F",
-      "G\u266F": "A\u266D",
-      "G\u266D": "F\u266F",
-      "F\u266F": "G\u266D",
-      "E\u266D": "D\u266F",
-      "D\u266F": "E\u266D",
-      "D\u266D": "C\u266F",
-      "C\u266F": "D\u266D"
-    };
-    if (swaps[element.textContent]) {
-      element.textContent = swaps[element.textContent];
-    }
-  };
-  function showStatus(message, isError = false) {
-    const midiStatus = document.getElementById("midiStatus");
-    if (midiStatus) {
-      midiStatus.innerHTML = message;
-      midiStatus.style.background = isError ? "#660000" : "black";
-    }
-    if (isError) {
-      console.error("[JSMidiCircle]", message);
+
+  // src/midiHandler.js
+  function updateNote(noteState, e) {
+    const note2 = e.note.number % 12;
+    if (noteState === "on") {
+      state.noteArray[note2]++;
+      if (state.noteArray[note2] === 0) state.noteArray[note2] = 1;
+      circles[note2].setAttribute("data-n", state.noteArray[note2]);
+      if (state.noteArray[note2] === 1) {
+        circles[note2].setAttribute("class", "partial");
+      }
     } else {
-      console.log("[JSMidiCircle]", message);
+      state.noteArray[note2]--;
+      if (state.noteArray[note2] === 0) {
+        if (state.sustainPedal) {
+          state.noteArray[note2] = -1;
+        } else {
+          circles[note2].setAttribute("class", "off");
+        }
+      }
+      circles[note2].setAttribute("data-n", state.noteArray[note2]);
     }
+    clearTimeout(state.chordTimeout);
+    state.chordTimeout = setTimeout(detectAndDisplayChord, 40);
   }
   function initMidi() {
     console.log("[JSMidiCircle] Initializing WebMidi...");
@@ -2114,119 +2242,18 @@
         return;
       }
       const input = import_webmidi.default.inputs[0];
-      let sustainPedal = false;
-      const noteArray = new Array(12).fill(0);
-      const chordRoot = document.getElementById("chordRoot");
-      const chordQuality = document.getElementById("chordQuality");
-      const chordInversion = document.getElementById("chordInversion");
-      let chordTimeout = null;
-      function noteToIndex(noteName) {
-        const base = noteName.charAt(0).toUpperCase();
-        const accidental = noteName.slice(1);
-        const baseIndex = { "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11 }[base];
-        let offset = 0;
-        if (accidental.includes("#")) offset = accidental.split("#").length - 1;
-        if (accidental.includes("b")) offset = -(accidental.split("b").length - 1);
-        return (baseIndex + offset + 12) % 12;
-      }
-      function formatRoot(root) {
-        return root.replace(/#/g, " sharp").replace(/b/g, " flat");
-      }
-      function detectAndDisplayChord() {
-        const activeNotes = [];
-        const activeIndices = [];
-        for (let i = 0; i < 12; i++) {
-          if (noteArray[i] !== 0) {
-            activeNotes.push(NOTE_NAMES[i]);
-            activeIndices.push(i);
-          }
-        }
-        for (let i = 0; i < 12; i++) {
-          if (noteArray[i] !== 0) {
-            circles[i].setAttribute("class", "partial");
-          } else {
-            circles[i].setAttribute("class", "off");
-          }
-        }
-        if (chordRoot) chordRoot.textContent = "";
-        if (chordQuality) chordQuality.textContent = "";
-        if (chordInversion) chordInversion.textContent = "";
-        if (activeNotes.length > 0 && activeNotes.length < 3) {
-          if (chordQuality) {
-            chordQuality.textContent = "(add more notes)";
-          }
-        }
-        if (activeNotes.length >= 3) {
-          const detected = dist_exports.detect(activeNotes);
-          if (detected.length > 0) {
-            const chordName = detected[0];
-            const chordInfo = dist_exports.get(chordName);
-            if (chordInfo && chordInfo.tonic) {
-              const rootIndex = noteToIndex(chordInfo.tonic);
-              if (noteArray[rootIndex] !== 0) {
-                circles[rootIndex].setAttribute("class", "on");
-              }
-              if (chordRoot && chordQuality) {
-                chordRoot.textContent = formatRoot(chordInfo.tonic);
-                const quality = chordInfo.type || "";
-                chordQuality.textContent = quality;
-              }
-              if (chordInversion && chordName.includes("/")) {
-                const bassNote = chordName.split("/")[1];
-                const bassIndex = noteToIndex(bassNote);
-                const rootIdx = noteToIndex(chordInfo.tonic);
-                const interval2 = (bassIndex - rootIdx + 12) % 12;
-                let inversionText = "";
-                if (interval2 === 3 || interval2 === 4) {
-                  inversionText = "1st inversion (3rd in bass)";
-                } else if (interval2 === 7) {
-                  inversionText = "2nd inversion (5th in bass)";
-                } else if (interval2 === 10 || interval2 === 11) {
-                  inversionText = "3rd inversion (7th in bass)";
-                } else {
-                  inversionText = formatRoot(bassNote) + " in bass";
-                }
-                chordInversion.textContent = inversionText;
-              }
-            }
-          }
-        }
-      }
-      function updateNote(state, e) {
-        const note2 = e.note.number % 12;
-        if (state === "on") {
-          noteArray[note2]++;
-          if (noteArray[note2] === 0) noteArray[note2] = 1;
-          circles[note2].setAttribute("data-n", noteArray[note2]);
-          if (noteArray[note2] === 1) {
-            circles[note2].setAttribute("class", "partial");
-          }
-        } else {
-          noteArray[note2]--;
-          if (noteArray[note2] === 0) {
-            if (sustainPedal) {
-              noteArray[note2] = -1;
-            } else {
-              circles[note2].setAttribute("class", "off");
-            }
-          }
-          circles[note2].setAttribute("data-n", noteArray[note2]);
-        }
-        clearTimeout(chordTimeout);
-        chordTimeout = setTimeout(detectAndDisplayChord, 40);
-      }
       input.addListener("noteon", "all", (e) => updateNote("on", e));
       input.addListener("noteoff", "all", (e) => updateNote("off", e));
       input.addListener("controlchange", "all", (e) => {
         if (e.controller.number === 64) {
           if (e.value > 63) {
-            sustainPedal = true;
+            state.sustainPedal = true;
           } else {
-            sustainPedal = false;
+            state.sustainPedal = false;
             if (e.value === 0) {
-              noteArray.forEach((value, index4) => {
+              state.noteArray.forEach((value, index4) => {
                 if (value === -1) {
-                  noteArray[index4] = 0;
+                  state.noteArray[index4] = 0;
                   circles[index4].setAttribute("data-n", 0);
                 }
               });
@@ -2238,5 +2265,10 @@
       showStatus("Connected: " + (input.name || "MIDI Device"));
     });
   }
+
+  // src/main.js
+  initDom();
+  initLayout();
+  window.switchText = switchText;
   initMidi();
 })();
