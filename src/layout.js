@@ -1,7 +1,7 @@
 // Layout toggle and accidental switching
 import { state } from './state.js';
 import { arrangeCircles } from './geometry.js';
-import { NOTE_DISPLAY, MAJOR_TRIADS } from './constants.js';
+import { NOTE_DISPLAY, MAJOR_TRIADS, formatForDisplay } from './constants.js';
 import { svgGroups } from './dom.js';
 
 // Initialize layout with current state
@@ -68,7 +68,9 @@ function initNoteTooltips() {
         group.addEventListener('mouseenter', (e) => {
             const mode = state.useFlats ? 'flats' : 'sharps';
             const triad = MAJOR_TRIADS[mode][i];
-            tooltip.innerHTML = `<div class="recipe">${triad.recipe}</div><div class="name">${triad.name}</div>`;
+            const recipe = formatForDisplay(triad.recipe);
+            const name = formatForDisplay(triad.name);
+            tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name}</div>`;
             tooltip.classList.add('visible');
             positionTooltip(e, tooltip);
         });

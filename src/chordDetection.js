@@ -22,6 +22,30 @@ export function formatNote(noteName) {
     return NOTE_DISPLAY[mode][index];
 }
 
+// Select the best chord from detected options
+// Prefers simple triads (major/minor) over complex chords
+function selectBestChord(detected) {
+    // Priority: major triad, minor triad, then anything else
+    const dominated = ['major', 'minor', 'M', 'm', ''];
+
+    for (const chordName of detected) {
+        const info = Chord.get(chordName);
+        if (info && info.type) {
+            // Check if it's a simple triad (major or minor, no extensions)
+            if (info.type === 'major' || info.type === 'minor') {
+                return chordName;
+            }
+        }
+        // Empty type often means major triad
+        if (info && info.type === '') {
+            return chordName;
+        }
+    }
+
+    // Fall back to first detected
+    return detected[0];
+}
+
 // Detect and display chord from active notes
 export function detectAndDisplayChord() {
     const chordElements = getChordElements();
@@ -58,7 +82,8 @@ export function detectAndDisplayChord() {
     if (activeNotes.length >= 3) {
         const detected = Chord.detect(activeNotes);
         if (detected.length > 0) {
-            const chordName = detected[0];
+            // Prefer simple triads (major/minor) over complex chords (augmented/diminished)
+            const chordName = selectBestChord(detected);
             const chordInfo = Chord.get(chordName);
 
             if (chordInfo && chordInfo.tonic) {

@@ -603,33 +603,36 @@
   var MAJOR_TRIADS = {
     flats: [
       { name: "C major", recipe: "C   E   G" },
-      { name: "D\u266D major", recipe: "D\u266D   F   A\u266D" },
-      { name: "D major", recipe: "D   F\u266F   A" },
-      { name: "E\u266D major", recipe: "E\u266D   G   B\u266D" },
-      { name: "E major", recipe: "E   G\u266F   B" },
+      { name: "Db major", recipe: "Db   F   Ab" },
+      { name: "D major", recipe: "D   F#   A" },
+      { name: "Eb major", recipe: "Eb   G   Bb" },
+      { name: "E major", recipe: "E   G#   B" },
       { name: "F major", recipe: "F   A   C" },
-      { name: "G\u266D major", recipe: "G\u266D   B\u266D   D\u266D" },
+      { name: "Gb major", recipe: "Gb   Bb   Db" },
       { name: "G major", recipe: "G   B   D" },
-      { name: "A\u266D major", recipe: "A\u266D   C   E\u266D" },
-      { name: "A major", recipe: "A   C\u266F   E" },
-      { name: "B\u266D major", recipe: "B\u266D   D   F" },
-      { name: "B major", recipe: "B   D\u266F   F\u266F" }
+      { name: "Ab major", recipe: "Ab   C   Eb" },
+      { name: "A major", recipe: "A   C#   E" },
+      { name: "Bb major", recipe: "Bb   D   F" },
+      { name: "B major", recipe: "B   D#   F#" }
     ],
     sharps: [
       { name: "C major", recipe: "C   E   G" },
-      { name: "C\u266F major", recipe: "C\u266F   F   G\u266F" },
-      { name: "D major", recipe: "D   F\u266F   A" },
-      { name: "D\u266F major", recipe: "D\u266F   G   A\u266F" },
-      { name: "E major", recipe: "E   G\u266F   B" },
+      { name: "C# major", recipe: "C#   F   G#" },
+      { name: "D major", recipe: "D   F#   A" },
+      { name: "D# major", recipe: "D#   G   A#" },
+      { name: "E major", recipe: "E   G#   B" },
       { name: "F major", recipe: "F   A   C" },
-      { name: "F\u266F major", recipe: "F\u266F   A\u266F   C\u266F" },
+      { name: "F# major", recipe: "F#   A#   C#" },
       { name: "G major", recipe: "G   B   D" },
-      { name: "G\u266F major", recipe: "G\u266F   C   D\u266F" },
-      { name: "A major", recipe: "A   C\u266F   E" },
-      { name: "A\u266F major", recipe: "A\u266F   D   F" },
-      { name: "B major", recipe: "B   D\u266F   F\u266F" }
+      { name: "G# major", recipe: "G#   C   D#" },
+      { name: "A major", recipe: "A   C#   E" },
+      { name: "A# major", recipe: "A#   D   F" },
+      { name: "B major", recipe: "B   D#   F#" }
     ]
   };
+  function formatForDisplay(text) {
+    return text.replace(/#/g, "\u266F").replace(/b/g, "\u266D");
+  }
 
   // src/layout.js
   function initLayout() {
@@ -677,7 +680,9 @@
       group.addEventListener("mouseenter", (e) => {
         const mode = state.useFlats ? "flats" : "sharps";
         const triad = MAJOR_TRIADS[mode][i];
-        tooltip.innerHTML = `<div class="recipe">${triad.recipe}</div><div class="name">${triad.name}</div>`;
+        const recipe = formatForDisplay(triad.recipe);
+        const name2 = formatForDisplay(triad.name);
+        tooltip.innerHTML = `<div class="recipe">${recipe}</div><div class="name">${name2}</div>`;
         tooltip.classList.add("visible");
         positionTooltip(e, tooltip);
       });
@@ -2211,6 +2216,21 @@
     const mode = state.useFlats ? "flats" : "sharps";
     return NOTE_DISPLAY[mode][index4];
   }
+  function selectBestChord(detected) {
+    const dominated = ["major", "minor", "M", "m", ""];
+    for (const chordName of detected) {
+      const info = dist_exports.get(chordName);
+      if (info && info.type) {
+        if (info.type === "major" || info.type === "minor") {
+          return chordName;
+        }
+      }
+      if (info && info.type === "") {
+        return chordName;
+      }
+    }
+    return detected[0];
+  }
   function detectAndDisplayChord() {
     const chordElements = getChordElements();
     const activeNotes = [];
@@ -2237,7 +2257,7 @@
     if (activeNotes.length >= 3) {
       const detected = dist_exports.detect(activeNotes);
       if (detected.length > 0) {
-        const chordName = detected[0];
+        const chordName = selectBestChord(detected);
         const chordInfo = dist_exports.get(chordName);
         if (chordInfo && chordInfo.tonic) {
           const rootIndex = noteToIndex(chordInfo.tonic);
@@ -2314,7 +2334,74 @@
     });
   }
 
+  // src/chordTest.js
+  function parseRecipe(recipe) {
+    return recipe.split(/\s+/).filter((n) => n.length > 0);
+  }
+  function areEnharmonic(a, b) {
+    const enharmonics = {
+      "C#": "Db",
+      "Db": "C#",
+      "D#": "Eb",
+      "Eb": "D#",
+      "F#": "Gb",
+      "Gb": "F#",
+      "G#": "Ab",
+      "Ab": "G#",
+      "A#": "Bb",
+      "Bb": "A#"
+    };
+    return enharmonics[a] === b || enharmonics[b] === a;
+  }
+  function testChord(name2, recipe) {
+    const notes2 = parseRecipe(recipe);
+    const detected = dist_exports.detect(notes2);
+    const expectedRoot = name2.split(" ")[0];
+    for (const chordName of detected) {
+      const info = dist_exports.get(chordName);
+      if (info && info.tonic) {
+        const isMajor = info.type === "major" || info.type === "";
+        if (isMajor) {
+          if (info.tonic === expectedRoot || areEnharmonic(info.tonic, expectedRoot)) {
+            return { pass: true, detected: chordName, info };
+          }
+        }
+      }
+    }
+    return { pass: false, detected: detected.slice(0, 3) };
+  }
+  function runChordTests() {
+    console.group("\u{1F3B9} Chord Formula Verification");
+    let failures = 0;
+    for (const mode of ["sharps", "flats"]) {
+      console.group(`${mode.toUpperCase()} mode`);
+      const labels = NOTE_DISPLAY[mode];
+      for (let i = 0; i < MAJOR_TRIADS[mode].length; i++) {
+        const triad = MAJOR_TRIADS[mode][i];
+        const label = labels[i];
+        const notes2 = parseRecipe(triad.recipe);
+        const displayNotes = notes2.map((n) => formatForDisplay(n));
+        const result = testChord(triad.name, triad.recipe);
+        if (result.pass) {
+          const detectedName = formatForDisplay(result.info.tonic) + " " + (result.info.type || "major");
+          console.log(`\u2713 (${label}) - [${displayNotes.join(", ")}] -> ${detectedName}`);
+        } else {
+          failures++;
+          console.error(`\u2717 (${label}) - [${displayNotes.join(", ")}] -> detected as: ${result.detected.join(", ")}`);
+        }
+      }
+      console.groupEnd();
+    }
+    if (failures === 0) {
+      console.log("%c All chord formulas verified! \u2713", "color: green; font-weight: bold");
+    } else {
+      console.error(`%c ${failures} chord formula(s) failed verification`, "color: red; font-weight: bold");
+    }
+    console.groupEnd();
+  }
+
   // src/main.js
+  runChordTests();
   initDom();
   initLayout();
   initAccidentals();

@@ -11,33 +11,39 @@ export const NOTE_DISPLAY = {
 
 // Major triads for tooltips (indexed by chromatic position)
 // Each entry has: name (chord name), recipe (notes to play)
+// Uses ASCII accidentals (# and b) for tonal.js compatibility
 export const MAJOR_TRIADS = {
     flats: [
         { name: 'C major', recipe: 'C   E   G' },
-        { name: 'D♭ major', recipe: 'D♭   F   A♭' },
-        { name: 'D major', recipe: 'D   F♯   A' },
-        { name: 'E♭ major', recipe: 'E♭   G   B♭' },
-        { name: 'E major', recipe: 'E   G♯   B' },
+        { name: 'Db major', recipe: 'Db   F   Ab' },
+        { name: 'D major', recipe: 'D   F#   A' },
+        { name: 'Eb major', recipe: 'Eb   G   Bb' },
+        { name: 'E major', recipe: 'E   G#   B' },
         { name: 'F major', recipe: 'F   A   C' },
-        { name: 'G♭ major', recipe: 'G♭   B♭   D♭' },
+        { name: 'Gb major', recipe: 'Gb   Bb   Db' },
         { name: 'G major', recipe: 'G   B   D' },
-        { name: 'A♭ major', recipe: 'A♭   C   E♭' },
-        { name: 'A major', recipe: 'A   C♯   E' },
-        { name: 'B♭ major', recipe: 'B♭   D   F' },
-        { name: 'B major', recipe: 'B   D♯   F♯' }
+        { name: 'Ab major', recipe: 'Ab   C   Eb' },
+        { name: 'A major', recipe: 'A   C#   E' },
+        { name: 'Bb major', recipe: 'Bb   D   F' },
+        { name: 'B major', recipe: 'B   D#   F#' }
     ],
     sharps: [
         { name: 'C major', recipe: 'C   E   G' },
-        { name: 'C♯ major', recipe: 'C♯   F   G♯' },
-        { name: 'D major', recipe: 'D   F♯   A' },
-        { name: 'D♯ major', recipe: 'D♯   G   A♯' },
-        { name: 'E major', recipe: 'E   G♯   B' },
+        { name: 'C# major', recipe: 'C#   F   G#' },
+        { name: 'D major', recipe: 'D   F#   A' },
+        { name: 'D# major', recipe: 'D#   G   A#' },
+        { name: 'E major', recipe: 'E   G#   B' },
         { name: 'F major', recipe: 'F   A   C' },
-        { name: 'F♯ major', recipe: 'F♯   A♯   C♯' },
+        { name: 'F# major', recipe: 'F#   A#   C#' },
         { name: 'G major', recipe: 'G   B   D' },
-        { name: 'G♯ major', recipe: 'G♯   C   D♯' },
-        { name: 'A major', recipe: 'A   C♯   E' },
-        { name: 'A♯ major', recipe: 'A♯   D   F' },
-        { name: 'B major', recipe: 'B   D♯   F♯' }
+        { name: 'G# major', recipe: 'G#   C   D#' },
+        { name: 'A major', recipe: 'A   C#   E' },
+        { name: 'A# major', recipe: 'A#   D   F' },
+        { name: 'B major', recipe: 'B   D#   F#' }
     ]
 };
+
+// Convert ASCII accidentals to Unicode for display
+export function formatForDisplay(text) {
+    return text.replace(/#/g, '♯').replace(/b/g, '♭');
+}
