@@ -595,7 +595,7 @@
   }
 
   // src/constants.js
-  var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
   var NOTE_DISPLAY = {
     flats: ["C", "D\u266D", "D", "E\u266D", "E", "F", "G\u266D", "G", "A\u266D", "A", "B\u266D", "B"],
     sharps: ["C", "C\u266F", "D", "D\u266F", "E", "F", "F\u266F", "G", "G\u266F", "A", "A\u266F", "B"]
@@ -617,16 +617,16 @@
     ],
     sharps: [
       { name: "C major", recipe: "C   E   G" },
-      { name: "C\u266F major", recipe: "C\u266F   E\u266F   G\u266F" },
+      { name: "C\u266F major", recipe: "C\u266F   F   G\u266F" },
       { name: "D major", recipe: "D   F\u266F   A" },
-      { name: "D\u266F major", recipe: "D\u266F   F\u{1D12A}   A\u266F" },
+      { name: "D\u266F major", recipe: "D\u266F   G   A\u266F" },
       { name: "E major", recipe: "E   G\u266F   B" },
       { name: "F major", recipe: "F   A   C" },
       { name: "F\u266F major", recipe: "F\u266F   A\u266F   C\u266F" },
       { name: "G major", recipe: "G   B   D" },
-      { name: "G\u266F major", recipe: "G\u266F   B\u266F   D\u266F" },
+      { name: "G\u266F major", recipe: "G\u266F   C   D\u266F" },
       { name: "A major", recipe: "A   C\u266F   E" },
-      { name: "A\u266F major", recipe: "A\u266F   C\u{1D12A}   E\u266F" },
+      { name: "A\u266F major", recipe: "A\u266F   D   F" },
       { name: "B major", recipe: "B   D\u266F   F\u266F" }
     ]
   };
