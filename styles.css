@@ -3,7 +3,9 @@ html, body {
     margin: 0;
     overflow: hidden;
     height: 100%;
-    background: black;
+    background-color: #090818;
+    background-image: url('background.jpg');
+    background-repeat: repeat;
 }
 
 /* SVG container */

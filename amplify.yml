@@ -12,6 +12,7 @@ frontend:
     files:
       - index.html
       - styles.css
+      - background.jpg
       - dist/**/*
   cache:
     paths:
