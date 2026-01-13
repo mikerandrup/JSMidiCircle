@@ -3,6 +3,7 @@ html, body {
     margin: 0;
     overflow: hidden;
     height: 100%;
+    background: black;
 }
 
 /* SVG container */
@@ -19,6 +20,7 @@ svg > g > text {
     font: bold 20px sans-serif;
     cursor: default;
     letter-spacing: -1px;
+    fill: white;
 }
 
 svg > g > circle {
@@ -30,8 +32,8 @@ svg > g > circle {
     fill: url("#NoteOnGradient");
     animation: vibrate 0.08s linear infinite;
 }
-.partial { fill: #ddd; }
-.off { fill: white; }
+.partial { fill: #333; }
+.off { fill: black; }
 
 /* Subtle vibration for active chord root */
 @keyframes vibrate {
@@ -43,7 +45,7 @@ svg > g > circle {
 
 .cover {
     fill-opacity: 0;
-    fill: white;
+    fill: black;
 }
 
 /* Major ring (outer) intensity - stroke width based on octaves pressed */
@@ -235,14 +237,14 @@ g[data-ring="minor"] > circle[data-n="4"] {
     bottom: 0.5em;
     right: 0.5em;
     font-size: 14px;
-    color: #666;
+    color: #999;
     font-family: sans-serif;
 }
 
 #credit a {
-    color: #666;
+    color: #999;
 }
 
 #credit a:hover {
-    color: #000;
+    color: #fff;
 }

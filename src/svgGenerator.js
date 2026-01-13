@@ -20,7 +20,7 @@ export function createNoteGroup(ringKey, chromIndex) {
     circle.setAttribute('cx', '0');
     circle.setAttribute('cy', '0');
     circle.setAttribute('r', String(config.circleRadius));
-    circle.setAttribute('stroke', 'black');
+    circle.setAttribute('stroke', 'white');
     circle.setAttribute('stroke-width', String(config.strokeWidth));
     circle.setAttribute('data-n', '0');
 
