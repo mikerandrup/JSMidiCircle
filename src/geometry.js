@@ -1,13 +1,11 @@
 // Circle positioning and geometry calculations
 import { rings } from './dom.js';
-import { RING_CONFIG, RING_ORDER } from './constants.js';
+import { RING_CONFIG, RING_ORDER, chromToCOF } from './constants.js';
+
+// Re-export for any modules that import from geometry
+export { chromToCOF };
 
 const CENTER = 125;
-
-// Convert chromatic index to Circle of Fifths position (and vice versa)
-export function chromToCOF(index) {
-    return (index * 7) % 12;
-}
 
 // Convert circle position (0=top, clockwise) to x,y coordinates
 // radius parameter allows different ring sizes
