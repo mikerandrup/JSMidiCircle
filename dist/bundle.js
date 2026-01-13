@@ -546,6 +546,9 @@
 
   // src/constants.js
   var NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+  function chromToCOF(index4) {
+    return index4 * 7 % 12;
+  }
   var NOTE_DISPLAY = {
     flats: ["C", "D\u266D", "D", "E\u266D", "E", "F", "G\u266D", "G", "A\u266D", "A", "B\u266D", "B"],
     sharps: ["C", "C\u266F", "D", "D\u266F", "E", "F", "F\u266F", "G", "G\u266F", "A", "A\u266F", "B"]
@@ -657,7 +660,7 @@
     group.setAttribute("id", groupId);
     group.setAttribute("data-ring", ringKey);
     group.setAttribute("data-chrom", String(chromIndex));
-    group.style.setProperty("--note-hue", chromIndex * 30);
+    group.style.setProperty("--note-hue", chromToCOF(chromIndex) * 30);
     const circle = document.createElementNS(SVG_NS, "circle");
     circle.setAttribute("class", "off");
     circle.setAttribute("id", circleId);
@@ -715,7 +718,7 @@
         if (group) {
           group.setAttribute("data-ring", ringKey);
           group.setAttribute("data-chrom", String(chromIndex));
-          group.style.setProperty("--note-hue", chromIndex * 30);
+          group.style.setProperty("--note-hue", chromToCOF(chromIndex) * 30);
         }
         rings[ringKey].circles.push(circle);
         rings[ringKey].groups.push(group);
@@ -759,9 +762,6 @@
 
   // src/geometry.js
   var CENTER = 125;
-  function chromToCOF(index4) {
-    return index4 * 7 % 12;
-  }
   function indexToCoordinates(index4, radius = 100) {
     const angle = (index4 - 3) * (2 * Math.PI / 12);
     const x = Math.cos(angle) * radius + CENTER;

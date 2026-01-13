@@ -2,6 +2,12 @@
 // Uses flats for black keys - more standard in chord naming and better detected by tonal.js
 export const NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
+// Convert chromatic index (0-11) to Circle of Fifths position (0-11)
+// C=0, G=1, D=2, A=3, E=4, B=5, Gb=6, Db=7, Ab=8, Eb=9, Bb=10, F=11
+export function chromToCOF(index) {
+    return (index * 7) % 12;
+}
+
 // Accidental display names (indexed by chromatic position)
 // Only positions 1, 3, 6, 8, 10 have accidentals (black keys)
 export const NOTE_DISPLAY = {
