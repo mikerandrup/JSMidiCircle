@@ -6,6 +6,12 @@ html, body {
     background-color: #090818;
     background-image: url('background.jpg');
     background-repeat: repeat;
+    animation: scrollBackground 71.3s linear infinite;
+}
+
+@keyframes scrollBackground {
+    from { background-position-y: 0; }
+    to { background-position-y: 713px; }
 }
 
 /* SVG container */
@@ -27,15 +33,16 @@ svg > g > text {
 
 svg > g > circle {
     transition-property: fill-opacity;
+    stroke: hsl(var(--note-hue), 70%, 50%);
 }
 
 /* Note states */
 .on {
-    fill: url("#NoteOnGradient");
+    fill: hsl(var(--note-hue), 90%, 55%);
     animation: vibrate 0.08s linear infinite;
 }
-.partial { fill: #333; }
-.off { fill: black; }
+.partial { fill: hsl(var(--note-hue), 50%, 25%); }
+.off { fill: hsl(var(--note-hue), 30%, 12%); }
 
 /* Subtle vibration for active chord root */
 @keyframes vibrate {
@@ -54,7 +61,6 @@ svg > g > circle {
 g[data-ring="major"] > circle[data-n="-1"] {
     stroke-width: 2;
     fill-opacity: 0;
-    fill: url("#NoteOnGradient");
     transition: fill-opacity 10s cubic-bezier(.1,1,1,1);
 }
 
@@ -101,7 +107,6 @@ g[data-ring="minor"] > circle {
 g[data-ring="minor"] > circle[data-n="-1"] {
     stroke-width: 1.5;
     fill-opacity: 0;
-    fill: url("#NoteOnGradient");
     transition: fill-opacity 10s cubic-bezier(.1,1,1,1);
 }
 

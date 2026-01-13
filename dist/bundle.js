@@ -657,6 +657,7 @@
     group.setAttribute("id", groupId);
     group.setAttribute("data-ring", ringKey);
     group.setAttribute("data-chrom", String(chromIndex));
+    group.style.setProperty("--note-hue", chromIndex * 30);
     const circle = document.createElementNS(SVG_NS, "circle");
     circle.setAttribute("class", "off");
     circle.setAttribute("id", circleId);
@@ -710,9 +711,11 @@
       for (let i = 1; i <= 12; i++) {
         const circle = document.getElementById(`${config.idPrefix}${i}`);
         const group = document.getElementById(`${config.groupPrefix}${i}`);
+        const chromIndex = i - 1;
         if (group) {
           group.setAttribute("data-ring", ringKey);
-          group.setAttribute("data-chrom", String(i - 1));
+          group.setAttribute("data-chrom", String(chromIndex));
+          group.style.setProperty("--note-hue", chromIndex * 30);
         }
         rings[ringKey].circles.push(circle);
         rings[ringKey].groups.push(group);

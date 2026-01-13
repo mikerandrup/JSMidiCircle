@@ -13,6 +13,8 @@ export function createNoteGroup(ringKey, chromIndex) {
     group.setAttribute('id', groupId);
     group.setAttribute('data-ring', ringKey);
     group.setAttribute('data-chrom', String(chromIndex));
+    // Set hue based on chromatic index (0-360°, 30° per semitone)
+    group.style.setProperty('--note-hue', chromIndex * 30);
 
     const circle = document.createElementNS(SVG_NS, 'circle');
     circle.setAttribute('class', 'off');
