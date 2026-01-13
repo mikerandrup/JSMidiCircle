@@ -33,11 +33,14 @@ export function initDom() {
         for (let i = 1; i <= 12; i++) {
             const circle = document.getElementById(`${config.idPrefix}${i}`);
             const group = document.getElementById(`${config.groupPrefix}${i}`);
+            const chromIndex = i - 1;
 
             if (group) {
                 // Add data-ring attribute for consistent CSS targeting
                 group.setAttribute('data-ring', ringKey);
-                group.setAttribute('data-chrom', String(i - 1));
+                group.setAttribute('data-chrom', String(chromIndex));
+                // Set hue based on chromatic index (0-360°, 30° per semitone)
+                group.style.setProperty('--note-hue', chromIndex * 30);
             }
 
             rings[ringKey].circles.push(circle);
